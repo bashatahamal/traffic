@@ -1,0 +1,947 @@
+<html>
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Traffic Monitoring System</title>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="author" content="colorlib.com">
+	<!-- <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet" /> -->
+	<link href={{ url_for('static', filename='css/main.css') }} rel="stylesheet" />
+
+	<script src="{{ url_for('static', filename='js/extention/choices.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+	<!-- <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+	<style id="compiled-css" type="text/css">
+		#container2 {
+			/* position: absolute; */
+			/* display: block; */
+			margin-left: auto;
+			margin-right: auto;
+			/* margin-top: 10vh; */
+		}
+
+		#canvas2 {
+			border: 1px solid #000;
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		#clear {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		#demo {
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		#svg_play {
+			width: 100px;
+			height: 100px;
+			top: 50%;
+			left: 50%;
+			margin: -50px 0 0 -50px;
+			position: fixed;
+			cursor: pointer;
+		}
+
+		.grid-container {
+			display: grid;
+			grid-template-columns: 15% auto 15%;
+			/* grid-auto-rows: minmax(min-content, max-content); */
+			/* grid-template-rows: 15% auto 15%; */
+			grid-template-rows: 10vh auto auto;
+			grid-gap: 10px;
+			/* background-color: #2196F3; */
+			/* background-color: #cccccc; */
+			/* padding: 10px; */
+			background: url("{{ url_for('static', filename='images/Searchs_131.png') }}");
+			/* background-attachment: fixed; */
+			background-position: center;
+			background-repeat: no-repeat;
+			background-size: cover;
+		}
+
+		.grid-container>div {
+			/* background-color: rgba(255, 255, 255, 0.8); */
+			/* background-color: #cccccc; */
+			grid-auto-rows: minmax(min-content, max-content);
+			/* text-align: center; */
+			align-content: start;
+			/* padding: 20px 0; */
+			/* font-size: 20px; */
+			font-family: 'Poppins';
+			font-size: 20px;
+		}
+
+		.item1 {
+			grid-column-start: 1;
+			grid-column-end: 4;
+			grid-auto-rows: auto;
+			text-align: center;
+			margin-top: 0%;
+		}
+
+		.item2 {
+			text-align: center;
+			/* background-color: rgba(204, 204, 204, 0.8); */
+		}
+
+		.item3 {
+			grid-column-start: 2;
+			grid-column-end: 3;
+		}
+
+		.item4 {
+			text-align: left;
+		}
+
+		.item5 {
+			grid-column-start: 1;
+			grid-column-end: 4;
+			text-align: center;
+			background-color: #cccccc;
+		}
+
+		.button {
+			display: inline-block;
+			padding: 15px 25px;
+			font-size: 24px;
+			cursor: pointer;
+			text-align: center;
+			text-decoration: none;
+			outline: none;
+			color: #fff;
+			background-color: #4CAF50;
+			border: none;
+			border-radius: 15px;
+			box-shadow: 0 9px #999;
+		}
+
+		.button:hover {
+			background-color: #3e8e41
+		}
+
+		.button:active {
+			background-color: #3e8e41;
+			box-shadow: 0 5px #666;
+			transform: translateY(4px);
+		}
+
+		.myButton {
+			box-shadow: inset 0px 0px 0px 0px #91b8b3;
+			background: linear-gradient(to bottom, #768d87 5%, #6c7c7c 100%);
+			background-color: #768d87;
+			border-radius: 5px;
+			border: 2px solid #566963;
+			display: inline-block;
+			cursor: pointer;
+			color: #ffffff;
+			font-family: Arial;
+			font-size: 13px;
+			font-weight: bold;
+			padding: 6px 24px;
+			text-decoration: none;
+			text-shadow: 0px 1px 0px #2b665e;
+			margin-top: 5px;
+		}
+
+		.myButton:hover {
+			background: linear-gradient(to bottom, #6c7c7c 5%, #768d87 100%);
+			background-color: #6c7c7c;
+		}
+
+		.myButton:active {
+			position: relative;
+			top: 1px;
+		}
+
+
+		/* EOS */
+	</style>
+
+	<script>
+		window.console = window.console || function (t) { };
+	</script>
+
+
+
+	<script>
+		if (document.location.search.match(/type=embed/gi)) {
+			window.parent.postMessage("resize", "*");
+		}
+	</script>
+
+</head>
+
+<body>
+	<div class="grid-container">
+		<div class="item1">
+			<div class="s130">
+				<form>
+					<div class="inner-form">
+						<div class="input-field first-wrap">
+							<div class="svg-wrapper">
+								<svg width="24" height="24" viewBox="0 0 24 24">
+									<path id='video_icon' fill='black'
+										d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
+								</svg>
+								</svg>
+							</div>
+							<input id="search" type="text" placeholder="Video Source Input" />
+						</div>
+						<div class="input-field second-wrap">
+							<button id='submit_btn' class="btn-search" type="button"
+								onclick="submit_video_path()">Submit</button>
+						</div>
+					</div>
+					<span class="info">ex. video file path(.mp4, avi, etc) video stream url(rtsp://, http://) camera
+						index(0, 1, etc)</span>
+				</form>
+			</div>
+		</div>
+		<div class="item2">
+			<div>Button</div>
+			<button id="add_rect" style="display: inline-block;" class=myButton type="button" name="button">Add</button>
+			<button id="clear" class=myButton type="button" name="button">Clear</button>
+			<button id="show_media" style="display: none;" class=myButton type="button" name="button"
+				onclick="show_media_button()">Show stop
+				button</button>
+			<!-- <svg width="50%" height="50%" viewbox="0 0 140 140"  preserveAspectRatio="none"> -->
+
+		</div>
+		<div class="item3">
+			<div id="container2">
+				<!-- <img id="bg" src="{{ url_for('video_feed') }}"> -->
+				<canvas id="canvas2" class=center width="704" height="563">
+					<!-- <canvas id="canvas2" class=center width="720" height="576" style="background: url('{{ url_for('video_feed') }}')"> -->
+					Browser does not support HTML5 Canvas.
+				</canvas>
+				<svg id="svg_play" width="100%" height="100%" viewBox="0 0 140 140" preserveAspectRatio="none">
+					<circle cx="70" cy="70" r="65" style="fill:#fff;stroke:#ddd" />
+					<polygon id="shape" points="50,40 100,70 100,70 50,100, 50,40" style="fill:#aaa;">
+						<animate id="animate_to_stop" begin="indefinite" fill="freeze" attributeName="points"
+							dur="500ms" to="45,45 95,45 95,95, 45,95 45,45" keySplines="
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1" keyTimes="0;0.22;0.33;0.55;0.66;0.88;1" calcMode="spline" />
+
+						<animate id="animate_to_play" begin="indefinite" fill="freeze" attributeName="points"
+							dur="500ms" to="50,40 100,70 100,70 50,100, 50,40" keySplines="
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1; 
+							0.1 0.8 0.2 1" keyTimes="0;0.22;0.33;0.55;0.66;0.88;1" calcMode="spline" />
+					</polygon>
+				</svg>
+				<div style="font-family: Verdana; font-size: 12px; text-align: center;">
+					<p>Click to select. Click on selection handles to resize. Double click to create a new node.
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="item4">
+			Result
+			<!-- <label id="demo"></label> -->
+			<p id=r1>
+				Pedestrian :
+			</p>
+			<p id=r2>
+				Motobike : 
+			</p>
+			<p id=r3>
+				Car : 
+			</p>
+			<p id=r4>
+				Bus :
+			</p>
+			<p id=r5>
+				Truck : 
+			</p>
+		</div>
+		<div class="item5">
+			<!-- footer -->
+		</div>
+	</div>
+</body>
+
+</html>
+
+<script>
+	document.getElementById('submit_btn').addEventListener('click', checkSubmit);
+	submit = false
+	playing = false;
+
+	function show_media_button() {
+		if (document.getElementById('show_media').innerHTML == 'Show stop button') {
+			document.getElementById('svg_play').style.display = 'block'
+			if (playing) {
+				timer_hide = setInterval(hide_play_button, 5000);
+				document.getElementById('show_media').innerHTML = 'Hide stop button'
+			}
+
+		}
+		else if (document.getElementById('show_media').innerHTML == 'Hide stop button') {
+			document.getElementById('svg_play').style.display = 'none'
+			clearInterval(timer_hide)
+			if (playing) {
+				document.getElementById('show_media').innerHTML = 'Show stop button'
+			}
+		}
+	}
+
+	function checkSubmit() {
+		if (submit == false) {
+			submit = true
+			document.getElementById('search').readOnly = true
+			document.getElementsByClassName('input-field first-wrap')[0].style.background = '#80CBC4'
+			document.getElementsByClassName('btn-search')[0].style.background = '#009688'
+			document.getElementsByClassName('btn-search')[0].innerHTML = 'Edit'
+			document.getElementById('search').style.color = '#8D6E63'
+			document.getElementsByClassName('btn-search')[0].style.color = '#004D40'
+			$("#video_icon").css("fill", "gray");
+		} else {
+			submit = false
+			document.getElementById('search').readOnly = false
+			document.getElementsByClassName('input-field first-wrap')[0].style.background = '#d9f1e3'
+			document.getElementsByClassName('btn-search')[0].style.background = '#00ad5f'
+			document.getElementsByClassName('btn-search')[0].innerHTML = 'Submit'
+			document.getElementById('search').style.color = '#000000'
+			document.getElementsByClassName('btn-search')[0].style.color = '#FFFFFF'
+			$("#video_icon").css("fill", "black");
+		}
+	}
+
+	function getdata() {
+		const url = 'http://0.0.0.0:5000/data'
+		fetch(url)
+			.then(response => response.json())
+			.then(json_data => {
+				// console.log(json_data);
+				document.getElementById("r1").innerHTML = 'Pedestrian : ' + JSON.stringify(json_data[0])
+				document.getElementById("r2").innerHTML = 'Motobike : ' + JSON.stringify(json_data[1])
+				document.getElementById("r3").innerHTML = 'Car : ' + JSON.stringify(json_data[2])
+				document.getElementById("r4").innerHTML = 'Bus : ' + JSON.stringify(json_data[3])
+				document.getElementById("r5").innerHTML = 'Truck : ' + JSON.stringify(json_data[4])
+			})
+	}
+
+	function getfeed() {
+		const url = 'http://0.0.0.0:5000/video_feed'
+		fetch(url)
+			.then(response => response.json())
+			.then(json_data => {
+				console.log(json_data);
+				// document.getElementById("demo").innerHTML = JSON.stringify(json_data)
+			})
+	}
+
+
+	function submit_video_path() {
+		value = [document.getElementById('search').value]
+		fetch(`${window.origin}/bridge`, {
+			method: "POST",
+			credentials: "include",
+			body: JSON.stringify(value),
+			cache: "no-cache",
+			headers: new Headers({
+				"content-type": "application/json"
+			})
+		})
+			.then(function (response) {
+				if (response.status !== 200) {
+					console.log('error')
+					return
+				}
+				response.json().then(function (data) {
+					console.log(data);
+					document.getElementById('canvas2').height = data[0]
+					document.getElementById('canvas2').width = data[1]
+					document.getElementById('canvas2').style.background = 'url("./static/images/frame.jpg")'
+					// timer_preview = setInterval(preview_canvas, 3000);
+					
+				});
+			})
+			.catch(function (error) {
+				console.log("Fetch error: " + error)
+			})
+	}
+
+	function preview_canvas(){
+		document.getElementById('canvas2').style.background = 'url("./static/images/frame.jpg")'
+		clearInterval(timer_preview)
+	}
+
+	function submit_the_values() {
+		values = [boxes2, document.getElementById('search').value]
+		fetch(`${window.origin}/bridge`, {
+			method: "POST",
+			credentials: "include",
+			body: JSON.stringify(values),
+			cache: "no-cache",
+			headers: new Headers({
+				"content-type": "application/json"
+			})
+		})
+			.then(function (response) {
+				if (response.status !== 200) {
+					console.log('error')
+					return
+				}
+				response.json().then(function (data) {
+					console.log(data);
+					// if (data == 'processing') {
+					//     location.replace('processing_page')
+					// }
+				});
+			})
+			.catch(function (error) {
+				console.log("Fetch error: " + error)
+			})
+	}
+
+	function submit_stop() {
+		fetch(`${window.origin}/bridge`, {
+			method: "POST",
+			credentials: "include",
+			body: JSON.stringify('STOP'),
+			cache: "no-cache",
+			headers: new Headers({
+				"content-type": "application/json"
+			})
+		})
+			.then(function (response) {
+				if (response.status !== 200) {
+					console.log('error')
+					return
+				}
+				response.json().then(function (data) {
+					console.log(data);
+				});
+			})
+			.catch(function (error) {
+				console.log("Fetch error: " + error)
+			})
+	}
+
+	$('svg').click(function () {
+		playing = !playing;
+		var animation = playing ? 'stop' : 'play';
+		$('#animate_to_' + animation).get(0).beginElement();
+		// $('h1').text('click to ' + (playing ? 'stop' : 'play'));
+		if (playing) {
+			submit_the_values();
+			// change_canvas_feed();
+			document.getElementById('canvas2').style.background = 'url("/video_feed")'
+			// getfeed()
+			timer_hide = setInterval(hide_play_button, 2000);
+			timer_get_data = setInterval(getdata, 500);
+		} else {
+			submit_stop();
+			// document.getElementById('canvas2').style.background = ''
+			// document.getElementById('canvas2').style.background = 'url("/last_im0")'
+			// document.getElementById('canvas2').style.background = 'url("./static/images/last_im0.jpg")'
+			clearInterval(timer_hide)
+			clearInterval(timer_get_data)
+			document.getElementById('show_media').style.display = 'none'
+		};
+	});
+
+	// function change_canvas_feed() {
+	// 	document.getElementById('canvas2').style.background = 'url("/video_feed")'
+	// }
+
+	function hide_play_button() {
+		document.getElementById('svg_play').style.display = 'none'
+		document.getElementById('show_media').style.display = 'inline-block'
+		document.getElementById('show_media').innerHTML = 'Show stop button'
+		clearInterval(timer_hide);
+	}
+
+	//<![CDATA[
+	// Last updated November 2010 by Simon Sarris
+	// www.simonsarris.com
+	// sarris@acm.org
+	//
+	// Free to use and distribute at will
+	// So long as you are nice to people, etc
+
+	// This is a self-executing function that I added only to stop this
+	// new script from interfering with the old one. It's a good idea in general, but not
+	// something I wanted to go over during this tutorial
+	(function (window) {
+
+
+		// holds all our boxes
+		boxes2 = [];
+
+		// New, holds the 8 tiny boxes that will be our selection handles
+		// the selection handles will be in this order:
+		// 0  1  2
+		// 3     4
+		// 5  6  7
+		var selectionHandles = [];
+
+		// Hold canvas information
+		var canvas;
+		var ctx;
+		var WIDTH;
+		var HEIGHT;
+		var INTERVAL = 20; // how often, in milliseconds, we check to see if a redraw is needed
+
+		var isDrag = false;
+		var isResizeDrag = false;
+		var expectResize = -1; // New, will save the # of the selection handle if the mouse is over one.
+		var mx, my; // mouse coordinates
+
+		// when set to true, the canvas will redraw everything
+		// invalidate() just sets this to false right now
+		// we want to call invalidate() whenever we make a change
+		var canvasValid = false;
+
+		// The node (if any) being selected.
+		// If in the future we want to select multiple objects, this will get turned into an array
+		var mySel = null;
+
+		// The selection color and width. Right now we have a red selection with a small width
+		var mySelColor = '#CC0000';
+		var mySelWidth = 2;
+		var mySelBoxColor = 'darkred'; // New for selection boxes
+		var mySelBoxSize = 6;
+
+		// we use a fake canvas to draw individual shapes for selection testing
+		var ghostcanvas;
+		var gctx; // fake canvas context
+
+		// since we can drag from anywhere in a node
+		// instead of just its x/y corner, we need to save
+		// the offset of the mouse when we start dragging.
+		var offsetx, offsety;
+
+		// Padding and border style widths for mouse offsets
+		var stylePaddingLeft, stylePaddingTop, styleBorderLeft, styleBorderTop;
+
+		// Box object to hold data
+		function Box2() {
+			this.x = 0;
+			this.y = 0;
+			this.w = 1; // default width and height?
+			this.h = 1;
+			this.fill = '#444444';
+		}
+
+		// New methods on the Box class
+		Box2.prototype = {
+			// we used to have a solo draw function
+			// but now each box is responsible for its own drawing
+			// mainDraw() will call this with the normal canvas
+			// myDown will call this with the ghost canvas with 'black'
+			draw: function (context, optionalColor) {
+				if (context === gctx) {
+					context.fillStyle = 'black'; // always want black for the ghost canvas
+				} else {
+					context.fillStyle = this.fill;
+				}
+
+				// We can skip the drawing of elements that have moved off the screen:
+				if (this.x > WIDTH || this.y > HEIGHT) return;
+				if (this.x + this.w < 0 || this.y + this.h < 0) return;
+
+				context.fillRect(this.x, this.y, this.w, this.h);
+
+				// draw selection
+				// this is a stroke along the box and also 8 new selection handles
+				if (mySel === this) {
+					context.strokeStyle = mySelColor;
+					context.lineWidth = mySelWidth;
+					context.strokeRect(this.x, this.y, this.w, this.h);
+
+					// draw the boxes
+
+					var half = mySelBoxSize / 2;
+
+					// 0  1  2
+					// 3     4
+					// 5  6  7
+
+					// top left, middle, right
+					selectionHandles[0].x = this.x - half;
+					selectionHandles[0].y = this.y - half;
+
+					selectionHandles[1].x = this.x + this.w / 2 - half;
+					selectionHandles[1].y = this.y - half;
+
+					selectionHandles[2].x = this.x + this.w - half;
+					selectionHandles[2].y = this.y - half;
+
+					//middle left
+					selectionHandles[3].x = this.x - half;
+					selectionHandles[3].y = this.y + this.h / 2 - half;
+
+					//middle right
+					selectionHandles[4].x = this.x + this.w - half;
+					selectionHandles[4].y = this.y + this.h / 2 - half;
+
+					//bottom left, middle, right
+					selectionHandles[6].x = this.x + this.w / 2 - half;
+					selectionHandles[6].y = this.y + this.h - half;
+
+					selectionHandles[5].x = this.x - half;
+					selectionHandles[5].y = this.y + this.h - half;
+
+					selectionHandles[7].x = this.x + this.w - half;
+					selectionHandles[7].y = this.y + this.h - half;
+
+
+					context.fillStyle = mySelBoxColor;
+					for (var i = 0; i < 8; i++) {
+						var cur = selectionHandles[i];
+						context.fillRect(cur.x, cur.y, mySelBoxSize, mySelBoxSize);
+					}
+				}
+
+			} // end draw
+
+		}
+
+		//Initialize a new Box, add it, and invalidate the canvas
+		function addRect(x, y, w, h, fill) {
+			var rect = new Box2;
+			rect.x = x;
+			rect.y = y;
+			rect.w = w
+			rect.h = h;
+			rect.fill = fill;
+			boxes2.push(rect);
+			invalidate();
+			console.log(boxes2)
+		}
+
+		// initialize our canvas, add a ghost canvas, set draw loop
+		// then add everything we want to intially exist on the canvas
+		function init2() {
+			canvas = document.getElementById('canvas2');
+			var clear = document.getElementById('clear');
+			clear.addEventListener("click", clearCanvas);
+			var add_btn = document.getElementById('add_rect');
+			add_btn.addEventListener("click", add_btn_rect);
+			HEIGHT = canvas.height;
+			WIDTH = canvas.width;
+			ctx = canvas.getContext('2d');
+			ghostcanvas = document.createElement('canvas');
+			ghostcanvas.height = HEIGHT;
+			ghostcanvas.width = WIDTH;
+			gctx = ghostcanvas.getContext('2d');
+
+			//fixes a problem where double clicking causes text to get selected on the canvas
+			canvas.onselectstart = function () {
+				return false;
+			}
+
+			// fixes mouse co-ordinate problems when there's a border or padding
+			// see getMouse for more detail
+			if (document.defaultView && document.defaultView.getComputedStyle) {
+				stylePaddingLeft = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingLeft'], 10) || 0;
+				stylePaddingTop = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingTop'], 10) || 0;
+				styleBorderLeft = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderLeftWidth'], 10) || 0;
+				styleBorderTop = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderTopWidth'], 10) || 0;
+			}
+
+			// make mainDraw() fire every INTERVAL milliseconds
+			setInterval(mainDraw, INTERVAL);
+
+			// set our events. Up and down are for dragging,
+			// double click is for making new boxes
+			canvas.onmousedown = myDown;
+			canvas.onmouseup = myUp;
+			canvas.ondblclick = myDblClick;
+			canvas.onmousemove = myMove;
+
+			// set up the selection handle boxes
+			for (var i = 0; i < 8; i++) {
+				var rect = new Box2;
+				selectionHandles.push(rect);
+			}
+
+			// add custom initialization here:
+
+
+			// add a large green rectangle
+			// addRect(260, 70, 60, 65, 'rgba(0,205,0,0.7)');
+
+			// add a green-blue rectangle
+			// addRect(240, 120, 40, 40, 'rgba(2,165,165,0.7)');
+
+			// add a smaller purple rectangle
+			// addRect(45, 60, 25, 25, 'rgba(150,150,250,0.7)');
+		}
+
+
+		//wipes the canvas context
+		function clear(c) {
+			c.clearRect(0, 0, WIDTH, HEIGHT);
+		}
+
+		// Main draw loop.
+		// While draw is called as often as the INTERVAL variable demands,
+		// It only ever does something if the canvas gets invalidated by our code
+		function mainDraw() {
+			if (canvasValid == false) {
+				clear(ctx);
+
+				// Add stuff you want drawn in the background all the time here
+
+				// draw all boxes
+				var l = boxes2.length;
+				for (var i = 0; i < l; i++) {
+					boxes2[i].draw(ctx); // we used to call drawshape, but now each box draws itself
+				}
+
+				// Add stuff you want drawn on top all the time here
+
+				canvasValid = true;
+			}
+		}
+
+		// Happens when the mouse is moving inside the canvas
+		function myMove(e) {
+			if (isDrag) {
+				getMouse(e);
+
+				mySel.x = mx - offsetx;
+				mySel.y = my - offsety;
+
+				// something is changing position so we better invalidate the canvas!
+				invalidate();
+			} else if (isResizeDrag) {
+				// time ro resize!
+				var oldx = mySel.x;
+				var oldy = mySel.y;
+
+				// 0  1  2
+				// 3     4
+				// 5  6  7
+				switch (expectResize) {
+					case 0:
+						mySel.x = mx;
+						mySel.y = my;
+						mySel.w += oldx - mx;
+						mySel.h += oldy - my;
+						break;
+					case 1:
+						mySel.y = my;
+						mySel.h += oldy - my;
+						break;
+					case 2:
+						mySel.y = my;
+						mySel.w = mx - oldx;
+						mySel.h += oldy - my;
+						break;
+					case 3:
+						mySel.x = mx;
+						mySel.w += oldx - mx;
+						break;
+					case 4:
+						mySel.w = mx - oldx;
+						break;
+					case 5:
+						mySel.x = mx;
+						mySel.w += oldx - mx;
+						mySel.h = my - oldy;
+						break;
+					case 6:
+						mySel.h = my - oldy;
+						break;
+					case 7:
+						mySel.w = mx - oldx;
+						mySel.h = my - oldy;
+						break;
+				}
+
+				invalidate();
+			}
+
+			getMouse(e);
+			// if there's a selection see if we grabbed one of the selection handles
+			if (mySel !== null && !isResizeDrag) {
+				for (var i = 0; i < 8; i++) {
+					// 0  1  2
+					// 3     4
+					// 5  6  7
+
+					var cur = selectionHandles[i];
+
+					// we dont need to use the ghost context because
+					// selection handles will always be rectangles
+					if (mx >= cur.x && mx <= cur.x + mySelBoxSize &&
+						my >= cur.y && my <= cur.y + mySelBoxSize) {
+						// we found one!
+						expectResize = i;
+						invalidate();
+
+						switch (i) {
+							case 0:
+								this.style.cursor = 'nw-resize';
+								break;
+							case 1:
+								this.style.cursor = 'n-resize';
+								break;
+							case 2:
+								this.style.cursor = 'ne-resize';
+								break;
+							case 3:
+								this.style.cursor = 'w-resize';
+								break;
+							case 4:
+								this.style.cursor = 'e-resize';
+								break;
+							case 5:
+								this.style.cursor = 'sw-resize';
+								break;
+							case 6:
+								this.style.cursor = 's-resize';
+								break;
+							case 7:
+								this.style.cursor = 'se-resize';
+								break;
+						}
+						return;
+					}
+
+				}
+				// not over a selection box, return to normal
+				isResizeDrag = false;
+				expectResize = -1;
+				this.style.cursor = 'auto';
+			}
+
+		}
+
+		// Happens when the mouse is clicked in the canvas
+		function myDown(e) {
+			getMouse(e);
+
+			//we are over a selection box
+			if (expectResize !== -1) {
+				isResizeDrag = true;
+				return;
+			}
+
+			clear(gctx);
+			var l = boxes2.length;
+			for (var i = l - 1; i >= 0; i--) {
+				// draw shape onto ghost context
+				boxes2[i].draw(gctx, 'black');
+
+				// get image data at the mouse x,y pixel
+				var imageData = gctx.getImageData(mx, my, 1, 1);
+				var index = (mx + my * imageData.width) * 4;
+
+				// if the mouse pixel exists, select and break
+				if (imageData.data[3] > 0) {
+					mySel = boxes2[i];
+					offsetx = mx - mySel.x;
+					offsety = my - mySel.y;
+					mySel.x = mx - offsetx;
+					mySel.y = my - offsety;
+					isDrag = true;
+
+					invalidate();
+					clear(gctx);
+					return;
+				}
+
+			}
+			// havent returned means we have selected nothing
+			mySel = null;
+			// clear the ghost canvas for next time
+			clear(gctx);
+			// invalidate because we might need the selection border to disappear
+			invalidate();
+		}
+
+		function myUp() {
+			isDrag = false;
+			isResizeDrag = false;
+			expectResize = -1;
+		}
+
+		// adds a new node
+		function myDblClick(e) {
+			getMouse(e);
+			// for this method width and height determine the starting X and Y, too.
+			// so I left them as vars in case someone wanted to make them args for something and copy this code
+			var width = 250;
+			var height = 50;
+			addRect(mx - (width / 2), my - (height / 2), width, height, 'rgba(220,205,65,0.7)');
+		}
+
+		function add_btn_rect() {
+			var width = 250;
+			var height = 50;
+			addRect((Math.floor(Math.random() * (WIDTH - width))), (Math.floor(Math.random() * (HEIGHT - height))),
+				width, height, 'rgba(220,205,65,0.7)');
+		}
+
+
+		function invalidate() {
+			canvasValid = false;
+		}
+
+		function clearCanvas() {
+			boxes2 = []
+			clear(gctx)
+			clear(ctx)
+		}
+
+		// Sets mx,my to the mouse position absolute to the canvas
+		// unfortunately this can be tricky, we have to worry about padding and borders
+		function getMouse(e) {
+			var element = canvas,
+				offsetX = 0,
+				offsetY = 0;
+
+			if (element.offsetParent) {
+				do {
+					offsetX += element.offsetLeft;
+					offsetY += element.offsetTop;
+				} while ((element = element.offsetParent));
+			}
+
+			// Add padding and border style widths to offset
+			offsetX += stylePaddingLeft;
+			offsetY += stylePaddingTop;
+
+			offsetX += styleBorderLeft;
+			offsetY += styleBorderTop;
+
+			mx = e.pageX - offsetX;
+			my = e.pageY - offsetY
+			// console.log(mx)
+			// console.log(my)
+		}
+
+		// If you dont want to use <body onLoad='init()'>
+		// You could uncomment this init() reference and place the script reference inside the body tag
+		//init();
+		window.init2 = init2;
+	})(window);
+
+	// Andy added, as a replacement for 
+	// <body onLoad="init2()">
+	$(document).ready(function () {
+		// Your code here
+		init2();
+	});
+
+</script>
