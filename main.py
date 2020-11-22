@@ -1,8 +1,10 @@
-
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 import sys
+import numpy as np
+import matplotlib.path as MPath
+import random
 sys.path.insert(1, '/home/mhbrt/Desktop/Wind/Project/Traffic/yolov5/')
 from utils.utils import *
 from utils.datasets import *
@@ -15,12 +17,13 @@ from deep_sort.deep_sort import DeepSort
 app = Flask(__name__)
 
 data = {}
-data[0] = 0
-data[1] = 0
-data[2] = 0
-data[3] = 0
-data[4] = 0
-data[5] = 0
+data[0] = 0  # pedestrian
+data[1] = 0  # motobike
+data[2] = 0  # car
+data[3] = 0  # bus
+data[4] = 0  # truck
+data[5] = 0  # invalid direction
+data[6] = 0  # invalid turn
 stop_is_pressed = False
 url = ''
 
@@ -104,6 +107,66 @@ def get_size_and_frame(source):
     
     #     return h, w
 
+class IPoint: 
+    def __init__(self, x, y): 
+        self.x = x 
+        self.y = y 
+
+# Given three colinear points p, q, r, the function checks if  
+# point q lies on line segment 'pr'  
+def onSegment(p, q, r): 
+    if ( (q.x <= max(p.x, r.x)) and (q.x >= min(p.x, r.x)) and 
+           (q.y <= max(p.y, r.y)) and (q.y >= min(p.y, r.y))): 
+        return True
+    return False
+
+def orientation(p, q, r): 
+    # to find the orientation of an ordered triplet (p,q,r) 
+    # function returns the following values: 
+    # 0 : Colinear points 
+    # 1 : Clockwise points 
+    # 2 : Counterclockwise 
+    # See https://www.geeksforgeeks.org/orientation-3-ordered-points/amp/  
+    # for details of below formula.  
+    val = (float(q.y - p.y) * (r.x - q.x)) - (float(q.x - p.x) * (r.y - q.y)) 
+    if (val > 0): 
+        # Clockwise orientation 
+        return 1
+    elif (val < 0): 
+        # Counterclockwise orientation 
+        return 2
+    else:
+        # Colinear orientation 
+        return 0
+
+# The main function that returns true if  
+# the line segment 'p1q1' and 'p2q2' intersect. 
+def doIntersect(p1,q1,p2,q2): 
+    # Find the 4 orientations required for  
+    # the general and special cases 
+    o1 = orientation(p1, q1, p2) 
+    o2 = orientation(p1, q1, q2) 
+    o3 = orientation(p2, q2, p1) 
+    o4 = orientation(p2, q2, q1) 
+    # General case 
+    if ((o1 != o2) and (o3 != o4)): 
+        return True
+    # Special Cases 
+    # p1 , q1 and p2 are colinear and p2 lies on segment p1q1 
+    if ((o1 == 0) and onSegment(p1, p2, q1)): 
+        return True
+    # p1 , q1 and q2 are colinear and q2 lies on segment p1q1 
+    if ((o2 == 0) and onSegment(p1, q2, q1)): 
+        return True
+    # p2 , q2 and p1 are colinear and p1 lies on segment p2q2 
+    if ((o3 == 0) and onSegment(p2, p1, q2)): 
+        return True
+    # p2 , q2 and q1 are colinear and q1 lies on segment p2q2 
+    if ((o4 == 0) and onSegment(p2, q1, q2)): 
+        return True
+    # If none of the cases 
+    return False
+
 palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)
 
 def bbox_rel(image_width, image_height,  *xyxy):
@@ -139,13 +202,31 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
         cv2.rectangle(img, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
-        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 2)
+        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
     return img
 
-def detect(save_img=False, weights='', source='inferences/images',
-           output='inferences/output', img_size=640, conf_thres=0.4,
-           iou_thres=0.5, device='', view_img=False, save_txt=False,
-           classes=None, agnostic_nms=True, augment=True, update=True, fps_count=1):
+def most_frequent(List): 
+    return max(set(List), key = List.count) 
+
+def detect(weights='',
+           source='inferences/images',
+           output='inferences/output', 
+           img_size=640, 
+           conf_thres=0.4,
+           iou_thres=0.5, 
+           device='', 
+           view_img=False,
+           save_img=False,
+           save_txt=False,
+           classes=None,
+           agnostic_nms=True,
+           augment=True,
+           update=True,
+           fps_count=1,
+           line_coordinat = [],  # [[(x1,y1),(x2,y2)], ...]
+           polygon=[],  # [[[(x1,y1),(x2,y2),(x3,y3),...], [0(u)/1(r)/2(d)/3(l)]], ...]
+           invalid_move = []  # [[0,1], ...]
+           ):
     global data
     global stop_is_pressed
     
@@ -190,7 +271,7 @@ def detect(save_img=False, weights='', source='inferences/images',
         # view_img = True
         dataset = LoadImages(source, img_size=imgsz)
         # dataset = LoadStreams(source, img_size=imgsz)
-    save_img = True
+    # save_img = True
     # view_img = True
 
     # Get names and colors
@@ -205,6 +286,12 @@ def detect(save_img=False, weights='', source='inferences/images',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
+    limit = 30
+    id_limit = 250
+    output_all_frames = {}
+    counting_id = []
+    invalid_direction_id = []
+    invalid_turn_id = []
     for path, img, im0s, vid_cap in dataset:
         # print(stop_is_pressed)
         while(stop_is_pressed):
@@ -256,12 +343,17 @@ def detect(save_img=False, weights='', source='inferences/images',
                     
                     bbox_xywh = []
                     confs = []
-                    
+                    save_from_det = {}
+                    for x in range(0, 5):
+                        save_from_det[x] = []
                     # Write results
                     for *xyxy, conf, cls in det:
                         for x in range(0, 5):
                             if int(cls) == x:
-                                data[x] += 1
+                                # data[x] += 1
+                                save_from_det[x].append(
+                                    [int(xyxy[0].item()), int(xyxy[1].item()),
+                                     int(xyxy[2].item()), int(xyxy[3].item())])
                                 break
 
                         img_h, img_w, _ = im0.shape
@@ -269,7 +361,6 @@ def detect(save_img=False, weights='', source='inferences/images',
                         obj = [x_c, y_c, bbox_w, bbox_h]
                         bbox_xywh.append(obj)
                         confs.append([conf.item()])
-
 
                         # if save_txt:  # Write to file
                         #     xywh = (xyxy2xywh(torch.tensor(xyxy).view(
@@ -282,18 +373,170 @@ def detect(save_img=False, weights='', source='inferences/images',
                         #     label = '%s %.2f' % (names[int(cls)], conf)
                         #     plot_one_box(xyxy, im0, label=label,
                         #                     color=colors[int(cls)], line_thickness=2)
+                    # print('Save from det : ', save_from_det)
                     xywhs = torch.Tensor(bbox_xywh)
                     confss = torch.Tensor(confs)
+
+                    for p, q in line_coordinat:
+                        cv2.line(im0, p, q, (100, 255, 100), 2)
+                    for x in range(len(polygon)):
+                        poly = polygon[x][0]
+                        pts = np.array(poly, np.int32)
+                        pts = pts.reshape((-1, 1, 2)) 
+                        cv2.polylines(im0, [pts], True, (255, 0, 0), 1) 
+  
                     
                     # Pass detections to deepsort
                     outputs = deepsort.update(xywhs, confss, im0)
                     print('Output Deep Sort: ', outputs)
-
                     # draw boxes for visualization
                     if len(outputs) > 0:
                         bbox_xyxy = outputs[:, :4]
                         identities = outputs[:, -1]
                         draw_boxes(im0, bbox_xyxy, identities)
+                        # Save all results to dictionary
+                        for i, box in enumerate(bbox_xyxy):
+                            x1, y1, x2, y2 = [int(i) for i in box]
+                            print('x1 y1 x2 y2 : ', x1,y1, x2, y2)
+                            print('i : ', i)
+                            print('int(identities[i]) : ', int(identities[i]))
+                            ds_class = float('inf')
+                            smallest = float('inf')
+                            for x in save_from_det:
+                                for sx1, sy1, sx2, sy2 in save_from_det[x]:
+                                    diff = sum(abs(np.array([x1, y1, x2, y2])
+                                            -np.array([sx1, sy1, sx2, sy2])))
+                                    if diff < smallest:
+                                        smallest = diff
+                                        ds_class = x
+                            if int(identities[i]) in output_all_frames.keys():
+                                # check crossed line
+                                (w1, h1) = (x2-x1, y2-y1)
+                                prev_xyxy = output_all_frames[int(identities[i])][0][-1]
+                                print('prev xyxy', prev_xyxy)
+                                (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
+                                (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
+                                # p1 = (int(x1 + (w1-x1)/2), int(y1 + (h1-y1)/2))
+                                # q1 = (int(xp + (wp-xp)/2), int(yp + (hp-yp)/2))
+                                p1 = (int(x1 + (w1)/2), int(y1 + (h1)/2))
+                                q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
+                                print('p1 q1 : ', p1, q1)
+                                cv2.line(im0, p1, q1, (10, 255, 10), 3)
+                                p1 = IPoint(p1[0], p1[1])
+                                q1 = IPoint(q1[0], q1[1])
+                                for p2, q2 in line_coordinat:
+                                    p2 = IPoint(p2[0], p2[1])
+                                    q2 = IPoint(q2[0], q2[1])
+                                    if doIntersect(p1, q1, p2, q2):
+                                        if int(identities[i]) not in counting_id:
+                                            counting_id.append(int(identities[i]))
+                                            data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
+                                # check direction
+                                minus_y1 = prev_xyxy[1] - y1 
+                                minus_y2 = prev_xyxy[3] - y2
+                                minus_x1 = prev_xyxy[0] - x1
+                                minus_x2 = prev_xyxy[2] - x2
+                                # 0=up, 1=right, 2=down, 3=left
+                                if minus_y1 > 0 and minus_y2 > 0:
+                                    output_all_frames[int(identities[i])][4].append(0)
+                                    label = '^'
+                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+                                if minus_y1 < 0 and minus_y2 < 0:
+                                    output_all_frames[int(identities[i])][4].append(2)
+                                    label = 'v'
+                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+                                if minus_x1 > 0 and minus_x2 > 0:
+                                    output_all_frames[int(identities[i])][4].append(3)
+                                    label = '<'
+                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+                                if minus_x1 < 0 and minus_x2 < 0:
+                                    output_all_frames[int(identities[i])][4].append(1)
+                                    label = '>'
+                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+                                # check region
+                                for x in range(len(polygon)):
+                                    path = MPath.Path(polygon[x][0])
+                                    # inside2 = path.contains_points([[i[0], i[1]]])
+                                    if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
+                                        output_all_frames[int(identities[i])][2].append(x)
+                                        output_all_frames[int(identities[i])][3].append(polygon[x][1])
+                                # check for invalid direction
+                                if len(output_all_frames[int(identities[i])][3]) > 10 \
+                                        and len(output_all_frames[int(identities[i])][4]) > 10:
+                                    # if most_frequent(output_all_frames[int(identities[i])][3]) \
+                                    #         != most_frequent(output_all_frames[int(identities[i])][4]):
+                                    unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
+                                                                  return_counts=True)
+                                    true_direction = most_frequent(output_all_frames[int(identities[i])][3])
+                                    for x in range(len(unique)):
+                                        if true_direction == unique[x]:
+                                            id_true_in_unique = x
+                                            break
+                                    if frequency[id_true_in_unique] < 3:
+                                        if int(identities[i]) not in invalid_direction_id:
+                                            invalid_direction_id.append(int(identities[i]))
+                                            data[5] += 1
+                                # check for invalid turn
+                                if len(output_all_frames[int(identities[i])][2]) > 10:
+                                    # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
+                                    #                                 return_counts=True)
+                                    first = True
+                                    region_trace = []
+                                    for r in output_all_frames[int(identities[i])][2]:
+                                        if first:
+                                            reg = r
+                                            region_trace.append(r)
+                                            first = False
+                                        if reg != r :
+                                            region_trace.append(r)
+                                            reg = r
+                                    if len(region_trace) > 1:
+                                        for reg1, reg2 in invalid_move:
+                                            for k in range(len(region_trace)):
+                                                if k+1 > len(region_trace)-1:
+                                                    break
+                                                if (region_trace[k], region_trace[k+1]) == (reg1, reg2):
+                                                    if int(identities[i]) not in invalid_turn_id:
+                                                        invalid_turn_id.append(int(identities[i]))
+                                                        data[6] += 1
+                                                    label = 'X'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                                    cv2.putText(im0, label, (x1 - t_size[1], y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 1)
+                            else:
+                                # oaf[ID] = [[in frame coordinat], [class_type], [region]
+                                #            [true_direction], [pred_direction]]
+                                output_all_frames[int(identities[i])] = [[], [], [], [], []]
+
+                            output_all_frames[int(identities[i])][0].append((x1, y1, x2, y2))
+                            if len(output_all_frames[int(identities[i])][0]) > limit:
+                                output_all_frames[int(identities[i])][0] = output_all_frames[int(identities[i])][0][-limit:]
+                            output_all_frames[int(identities[i])][1].append(ds_class)
+                            if len(output_all_frames[int(identities[i])][1]) > limit:
+                                output_all_frames[int(identities[i])][1] = output_all_frames[int(identities[i])][1][-limit:]
+                            if len(output_all_frames[int(identities[i])][2]) > limit:
+                                output_all_frames[int(identities[i])][2] = output_all_frames[int(identities[i])][2][-limit:]
+                            if len(output_all_frames[int(identities[i])][3]) > limit:
+                                output_all_frames[int(identities[i])][3] = output_all_frames[int(identities[i])][3][-limit:]
+                            if len(output_all_frames[int(identities[i])][4]) > limit:
+                                output_all_frames[int(identities[i])][4] = output_all_frames[int(identities[i])][4][-limit:]
+
+                        # delete output_all_frames oldest if more than n number of id
+                        if len(output_all_frames) > id_limit:
+                            unused = list(set(output_all_frames.keys())
+                                        -set(list(output_all_frames.keys())[-id_limit:]))
+                            for x in unused:
+                                del output_all_frames[x]
+                        if len(counting_id) > id_limit:
+                            counting_id = counting_id[-id_limit:]
+                        if len(invalid_direction_id) > id_limit:
+                            invalid_direction_id = invalid_direction_id[-id_limit:]
+                        if len(invalid_turn_id) > id_limit:
+                            invalid_turn_id = invalid_turn_id[-id_limit:]
+                        print('All Frame : ', output_all_frames)
 
                     # Write MOT compliant results to file
                     if save_txt and len(outputs) != 0:  
@@ -371,13 +614,17 @@ def video_feed():
             # source='/home/mhbrt/Desktop/EVA/eva/media/condong catur.mp4'
             source=url,
             # source='0',
-            img_size=640,
+            img_size=256,
             # augment=True,
             agnostic_nms=True,
             fps_count= 10,
             classes=None,       # Filter by class
             conf_thres=0.1,
-            iou_thres=0.5
+            iou_thres=0.5,
+            line_coordinat = [[(131,414), (331,386)], [(427,418), (586,367)]],
+            polygon=[[[(126,466), (158, 561), (529,566), (280,342), (122,346)], 0],
+                     [[(302,330), (554,508), (716,416), (444,314)], 2]],
+            invalid_move = [[0,1], [1,0]]
         ),mimetype = 'multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/data', methods=['GET'])
@@ -425,4 +672,4 @@ def bridge():
 
 
 if __name__ == '__main__':
-    app.run(host = '127.0.0.3', debug = True)
+    app.run(host = '0.0.0.0', debug = True)
