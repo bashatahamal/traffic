@@ -5,7 +5,8 @@ import sys
 import numpy as np
 import matplotlib.path as MPath
 import random
-sys.path.insert(1, '/home/mhbrt/Desktop/Wind/Project/Traffic/yolov5/')
+#sys.path.insert(1, '/home/mhbrt/Desktop/Wind/Project/Traffic/yolov5/')
+sys.path.insert(1, './yolov5/')
 from utils.utils import *
 from utils.datasets import *
 from utils import google_utils
