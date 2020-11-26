@@ -473,11 +473,13 @@ def detect(weights='',
                                     unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
                                                                   return_counts=True)
                                     true_direction = most_frequent(output_all_frames[int(identities[i])][3])
+                                    change = False
                                     for x in range(len(unique)):
                                         if true_direction == unique[x]:
                                             id_true_in_unique = x
+                                            change = True
                                             break
-                                    if frequency[id_true_in_unique] < 3:
+                                    if change and frequency[id_true_in_unique] < 3:
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
@@ -610,7 +612,7 @@ def video_feed():
     else:
         print('FROM VIDEO FEED')
         return Response(detect(
-            weights='/home/mhbrt/Desktop/Wind/Project/Traffic/best_Road.pt',
+            weights='../best_Road.pt',
             # source='rtsp://wowzaec2demo.streamlock.net/vod/mp4:BigBuckBunny_115k.mov',
             # source='/home/mhbrt/Desktop/EVA/eva/media/condong catur.mp4'
             source=url,
@@ -673,4 +675,4 @@ def bridge():
 
 
 if __name__ == '__main__':
-    app.run(host = '0.0.0.0', debug = True)
+    app.run(host = '127.0.0.3', debug = True)

@@ -323,7 +323,7 @@
 	}
 
 	function getdata() {
-		const url = 'http://0.0.0.0:5000/data'
+		const url = 'http://127.0.0.3:5000/data'
 		fetch(url)
 			.then(response => response.json())
 			.then(json_data => {
@@ -337,7 +337,7 @@
 	}
 
 	function getfeed() {
-		const url = 'http://0.0.0.0:5000/video_feed'
+		const url = 'http://127.0.0.3:5000/video_feed'
 		fetch(url)
 			.then(response => response.json())
 			.then(json_data => {
