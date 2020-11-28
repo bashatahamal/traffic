@@ -8,17 +8,31 @@
 	<meta name="author" content="colorlib.com">
 	<!-- <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet" /> -->
 	<link href={{ url_for('static', filename='css/main.css') }} rel="stylesheet" />
-
+	<!-- <link href={{ url_for('static', filename='css/materialize.min.css') }} rel="stylesheet" /> -->
 	<script src="{{ url_for('static', filename='js/extention/choices.js') }}"></script>
+
 	<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-3.0.0.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/jquery-2.1.1.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/materialize.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/fabric.min.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/script.js') }}"></script>
+	<script type="text/javascript" src="{{ url_for('static', filename='js/polygon.js') }}"></script>
 	<!-- <script type="text/javascript" src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script> -->
+	<!-- <style type="text/css">
+		* {
+			font-family: "Roboto", sans-serif;
+			font-weight: 100;
+		}
+	</style> -->
 	<style id="compiled-css" type="text/css">
 		#container2 {
-			/* position: absolute; */
-			/* display: block; */
+			/* position: fixed; */
+			display: block;
 			margin-left: auto;
 			margin-right: auto;
-			/* margin-top: 10vh; */
+			margin-top: auto;
+			margin-left: 6vw;
+			/* margin-top: 2vh; */
 		}
 
 		#canvas2 {
@@ -26,6 +40,7 @@
 			display: block;
 			margin-left: auto;
 			margin-right: auto;
+			position: fixed;
 		}
 
 		#clear {
@@ -52,7 +67,7 @@
 
 		.grid-container {
 			display: grid;
-			grid-template-columns: 15% auto 15%;
+			grid-template-columns: 15% auto 20%;
 			/* grid-auto-rows: minmax(min-content, max-content); */
 			/* grid-template-rows: 15% auto 15%; */
 			grid-template-rows: 10vh auto auto;
@@ -88,7 +103,7 @@
 		}
 
 		.item2 {
-			text-align: center;
+			text-align: right;
 			/* background-color: rgba(204, 204, 204, 0.8); */
 		}
 
@@ -99,6 +114,7 @@
 
 		.item4 {
 			text-align: left;
+			/* margin-left: auto; */
 		}
 
 		.item5 {
@@ -165,9 +181,9 @@
 		/* EOS */
 	</style>
 
-	<script>
+	<!-- <script>
 		window.console = window.console || function (t) { };
-	</script>
+	</script> -->
 
 
 
@@ -206,12 +222,38 @@
 			</div>
 		</div>
 		<div class="item2">
-			<div>Button</div>
-			<button id="add_rect" style="display: inline-block;" class=myButton type="button" name="button">Add</button>
-			<button id="clear" class=myButton type="button" name="button">Clear</button>
+			Configuration
+			<hr>
+			<button id="add_line" style="display: inline-block;" class=myButton type="button" name="button">Add
+				Line</button>
 			<button id="show_media" style="display: none;" class=myButton type="button" name="button"
 				onclick="show_media_button()">Show stop
 				button</button>
+			<hr>
+			<button id="add_poly_up" style="display: inline-block;" class=myButton type="button" name="button">Add Poly
+				Up</button>
+			<button id="add_poly_down" style="display: inline-block;" class=myButton type="button" name="button">Add
+				Poly Down</button>
+			<button id="add_poly_left" style="display: inline-block;" class=myButton type="button" name="button">Add
+				Poly Left</button>
+			<button id="add_poly_right" style="display: inline-block;" class=myButton type="button" name="button">Add
+				Poly Right</button>
+			<hr>
+			<div class="form-inline">
+				<select class="form-control" style="width: 40%; overflow: scroll;" , aria-placeholder="load" ,
+					id='list_region_A'>
+				</select>
+				to
+				<select class="form-control" style="width: 40%; overflow: scroll;" , aria-placeholder="load" ,
+					id='list_region_B'>
+				</select>
+			</div>
+			<button id="add_turn" style="display: inline-block;" class=myButton type="button" name="button">Add inv turn
+			</button>
+			<hr>
+			<button id="save_and_start" style="display: inline-block;" class=myButton type="button" name="button">Save
+				and Start
+			</button>
 			<!-- <svg width="50%" height="50%" viewbox="0 0 140 140"  preserveAspectRatio="none"> -->
 
 		</div>
@@ -244,29 +286,36 @@
 							0.1 0.8 0.2 1" keyTimes="0;0.22;0.33;0.55;0.66;0.88;1" calcMode="spline" />
 					</polygon>
 				</svg>
-				<div style="font-family: Verdana; font-size: 12px; text-align: center;">
+				<!-- <div style="font-family: Verdana; font-size: 12px; text-align: center;">
 					<p>Click to select. Click on selection handles to resize. Double click to create a new node.
 					</p>
-				</div>
+				</div> -->
 			</div>
 		</div>
 		<div class="item4">
 			Result
+			<hr>
 			<!-- <label id="demo"></label> -->
 			<p id=r1>
 				Pedestrian :
 			</p>
 			<p id=r2>
-				Motobike : 
+				Motobike :
 			</p>
 			<p id=r3>
-				Car : 
+				Car :
 			</p>
 			<p id=r4>
 				Bus :
 			</p>
 			<p id=r5>
-				Truck : 
+				Truck :
+			</p>
+			<p id=r6>
+				Invalid direction :
+			</p>
+			<p id=r7>
+				Invalid turn :
 			</p>
 		</div>
 		<div class="item5">
@@ -281,6 +330,14 @@
 	document.getElementById('submit_btn').addEventListener('click', checkSubmit);
 	submit = false
 	playing = false;
+
+	$(document).ready(function () {
+		document.getElementById('svg_play').style.display = 'none'
+	});
+
+	$("#save_and_start").on("click", function (value) {
+		document.getElementById('svg_play').style.display = 'block'
+	});
 
 	function show_media_button() {
 		if (document.getElementById('show_media').innerHTML == 'Show stop button') {
@@ -333,6 +390,8 @@
 				document.getElementById("r3").innerHTML = 'Car : ' + JSON.stringify(json_data[2])
 				document.getElementById("r4").innerHTML = 'Bus : ' + JSON.stringify(json_data[3])
 				document.getElementById("r5").innerHTML = 'Truck : ' + JSON.stringify(json_data[4])
+				document.getElementById("r6").innerHTML = 'Invalid direction : ' + JSON.stringify(json_data[5])
+				document.getElementById("r7").innerHTML = 'Invalid turn : ' + JSON.stringify(json_data[6])
 			})
 	}
 
@@ -368,8 +427,12 @@
 					document.getElementById('canvas2').height = data[0]
 					document.getElementById('canvas2').width = data[1]
 					document.getElementById('canvas2').style.background = 'url("./static/images/frame.jpg")'
+					canvas.setWidth(data[1]);
+					canvas.setHeight(data[0]);
+					// create_fabric(data[0], data[1])
+					// prototypefabric.initCanvas();
 					// timer_preview = setInterval(preview_canvas, 3000);
-					
+
 				});
 			})
 			.catch(function (error) {
@@ -377,7 +440,7 @@
 			})
 	}
 
-	function preview_canvas(){
+	function preview_canvas() {
 		document.getElementById('canvas2').style.background = 'url("./static/images/frame.jpg")'
 		clearInterval(timer_preview)
 	}
@@ -939,9 +1002,9 @@
 
 	// Andy added, as a replacement for 
 	// <body onLoad="init2()">
-	$(document).ready(function () {
-		// Your code here
-		init2();
-	});
+	// $(document).ready(function () {
+	// 	// Your code here
+	// 	init2();
+	// });
 
 </script>
