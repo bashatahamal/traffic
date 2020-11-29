@@ -474,25 +474,35 @@ def detect(weights='',
                                             output_all_frames[int(identities[i])][2].append(x)
                                             output_all_frames[int(identities[i])][3].append(polygon[x][1])
                                 # check for invalid direction
-                                if len(output_all_frames[int(identities[i])][3]) > 10 \
-                                        and len(output_all_frames[int(identities[i])][4]) > 10 and type_process[1]:
+                                if len(output_all_frames[int(identities[i])][3]) > int(3/4*limit)\
+                                        and len(output_all_frames[int(identities[i])][4]) > int(3/4*limit)\
+                                             and type_process[1]:
                                     # if most_frequent(output_all_frames[int(identities[i])][3]) \
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
                                     unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
                                                                   return_counts=True)
                                     true_direction = most_frequent(output_all_frames[int(identities[i])][3])
-                                    change = False
-                                    for x in range(len(unique)):
-                                        if true_direction == unique[x]:
-                                            id_true_in_unique = x
-                                            change = True
-                                            break
-                                    if change and frequency[id_true_in_unique] < 3:
+                                    if true_direction not in unique:
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
+                                        label = '!'
+                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                        cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
+                                    else:
+                                        for x in range(len(unique)):
+                                            if true_direction == unique[x]:
+                                                id_true_in_unique = x
+                                                break
+                                        if frequency[id_true_in_unique] < int(1/3*limit):
+                                            if int(identities[i]) not in invalid_direction_id:
+                                                invalid_direction_id.append(int(identities[i]))
+                                                data[5] += 1
+                                            label = '!'
+                                            t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                            cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
                                 # check for invalid turn
-                                if len(output_all_frames[int(identities[i])][2]) > 10 and type_process[2]:
+                                if len(output_all_frames[int(identities[i])][2]) > int(3/4*limit) and type_process[2]:
                                     # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
                                     #                                 return_counts=True)
                                     first = True
@@ -538,7 +548,7 @@ def detect(weights='',
                         # delete output_all_frames oldest if more than n number of id
                         if len(output_all_frames) > id_limit:
                             unused = list(set(output_all_frames.keys())
-                                        -set(list(output_all_frames.keys())[-id_limit:]))
+                                     -set(sorted(output_all_frames.keys())[-id_limit:]))
                             for x in unused:
                                 del output_all_frames[x]
                         if len(counting_id) > id_limit:
