@@ -31,7 +31,7 @@
 			margin-left: auto;
 			margin-right: auto;
 			margin-top: auto;
-			margin-left: 6vw;
+			margin-left: 7vw;
 			/* margin-top: 2vh; */
 		}
 
@@ -224,12 +224,16 @@
 		<div class="item2">
 			Configuration
 			<hr>
+			<input type="checkbox" id="is_line" name="line_cb" checked>
+			<label for="line_cb">vehicle count</label><br>
 			<button id="add_line" style="display: inline-block;" class=myButton type="button" name="button">Add
 				Line</button>
 			<button id="show_media" style="display: none;" class=myButton type="button" name="button"
 				onclick="show_media_button()">Show stop
 				button</button>
 			<hr>
+			<input type="checkbox" id="is_poly" name="poly_cb" checked>
+			<label for="poly_cb">invalid direction</label><br>
 			<button id="add_poly_up" style="display: inline-block;" class=myButton type="button" name="button">Add Poly
 				Up</button>
 			<button id="add_poly_down" style="display: inline-block;" class=myButton type="button" name="button">Add
@@ -239,17 +243,22 @@
 			<button id="add_poly_right" style="display: inline-block;" class=myButton type="button" name="button">Add
 				Poly Right</button>
 			<hr>
+			<input type="checkbox" id="is_turn" name="turn_cb" checked>
+			<label for="turn_cb">invalid turn</label><br>
 			<div class="form-inline">
-				<select class="form-control" style="width: 40%; overflow: scroll;" , aria-placeholder="load" ,
-					id='list_region_A'>
+				<select class="form-control" style="width: 40%; overflow: scroll; font-size: small;", id='list_region_A'>
 				</select>
 				to
-				<select class="form-control" style="width: 40%; overflow: scroll;" , aria-placeholder="load" ,
-					id='list_region_B'>
+				<select class="form-control" style="width: 40%; overflow: scroll; font-size: small;", id='list_region_B'>
 				</select>
 			</div>
 			<button id="add_turn" style="display: inline-block;" class=myButton type="button" name="button">Add inv turn
 			</button>
+			<div style="font-size: small;">
+				<br>
+				Invalid list:
+			</div>
+			<div id=view_invalid_turn style="font-size: small;"></div>
 			<hr>
 			<button id="save_and_start" style="display: inline-block;" class=myButton type="button" name="button">Save
 				and Start
@@ -330,6 +339,12 @@
 	document.getElementById('submit_btn').addEventListener('click', checkSubmit);
 	submit = false
 	playing = false;
+	var selectedA
+	var selectedB
+	var in_text_turn = ''
+	var InvTurnList = []
+	var typeProcess = []
+	// var timer_flag = false
 
 	$(document).ready(function () {
 		document.getElementById('svg_play').style.display = 'none'
@@ -337,6 +352,74 @@
 
 	$("#save_and_start").on("click", function (value) {
 		document.getElementById('svg_play').style.display = 'block'
+	});
+
+	function display_regA() {
+		inner = document.getElementById('list_region_A')
+		in_text = ''
+		for (x = DirectList.length; x > 0; x--) {
+			in_text += '<option value="' + x + '">region ' + x + '</option>'
+		}
+		inner.innerHTML = in_text
+		// inner.selectedIndex = 0
+		// selectedA = DirectList.length
+	}
+
+	$("#add_turn").on("click", function (value) {
+		inner = document.getElementById('view_invalid_turn')
+		valA = document.getElementById('list_region_A').value
+		valB = document.getElementById('list_region_B').value 
+		in_text_turn += '<div> region ' + valA + ' >>> ' + ' region ' + valB + '</div>'
+		inner.innerHTML = in_text_turn
+		InvTurnList.push([valA, valB])
+	});
+
+	$("#list_region_A").on("click", function (value) {
+		var This = $(this);
+		selectedA = $(this).val();
+		selected_setting = DirectList[selectedA-1]
+		// console.log(selected_setting)
+		// console.log(selectedA)
+		inner = document.getElementById('list_region_B')
+		in_text = ''
+		for (x = DirectList.length; x > 0; x--) {
+			if (x == selectedA) { continue; }
+			in_text += '<option value="' + x + '">region ' + x + '</option>'
+		}
+		inner.innerHTML = in_text
+		// inner.selectedIndex = 0
+		// selectedB = DirectList.length - 1
+	});
+
+	$("#save_and_start").on("click", function (value) {
+		typeProcess = [document.getElementById('is_line').checked,
+					   document.getElementById('is_poly').checked,
+					   document.getElementById('is_turn').checked]
+		values = [LineCoord, PolyCoord, DirectList, InvTurnList, typeProcess]
+		fetch(`${window.origin}/bridge`, {
+			method: "POST",
+			credentials: "include",
+			body: JSON.stringify(values),
+			cache: "no-cache",
+			headers: new Headers({
+				"content-type": "application/json"
+			})
+		})
+			.then(function (response) {
+				if (response.status !== 200) {
+					console.log('error')
+					return
+				}
+				response.json().then(function (data) {
+					console.log(data);
+					// if (data == 'processing') {
+					//     location.replace('processing_page')
+					// }
+				});
+			})
+			.catch(function (error) {
+				console.log("Fetch error: " + error)
+			})
 	});
 
 	function show_media_button() {
@@ -503,12 +586,12 @@
 		$('#animate_to_' + animation).get(0).beginElement();
 		// $('h1').text('click to ' + (playing ? 'stop' : 'play'));
 		if (playing) {
-			submit_the_values();
+			// submit_the_values();
 			// change_canvas_feed();
 			document.getElementById('canvas2').style.background = 'url("/video_feed")'
 			// getfeed()
 			timer_hide = setInterval(hide_play_button, 2000);
-			timer_get_data = setInterval(getdata, 500);
+			timer_get_data = setInterval(getdata, 1000);
 		} else {
 			submit_stop();
 			// document.getElementById('canvas2').style.background = ''

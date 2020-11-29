@@ -60,6 +60,7 @@ var prototypefabric = new function () {
             //             console.log('From PT Poly')
             if (options.target && options.target.id == pointArray[0].id && drawing_line == false) {
                 prototypefabric.polygon.generatePolygon(pointArray);
+                display_regA()
             }
             if (polygonMode && (direction != '' || drawing_line == true)) {
                 prototypefabric.polygon.addPoint(options);

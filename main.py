@@ -27,6 +27,10 @@ data[5] = 0  # invalid direction
 data[6] = 0  # invalid turn
 stop_is_pressed = False
 url = ''
+line_coordinat = []
+polygon = []
+invalid_move = []
+type_process = []  #counting vehicle, invalid direction, invalid turn
 
 @app.after_request
 def add_header(r):
@@ -200,10 +204,10 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         id = int(identities[i]) if identities is not None else 0   
         color = compute_color_for_labels(id)
         label = '{}{:d}'.format("", id)
-        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
         cv2.rectangle(img, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
-        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
     return img
 
 def most_frequent(List): 
@@ -230,6 +234,7 @@ def detect(weights='',
            ):
     global data
     global stop_is_pressed
+    global type_process
     
     out, source, weights, view_img, save_txt, imgsz = \
         output, source, weights, view_img, save_txt, img_size
@@ -287,8 +292,8 @@ def detect(weights='',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
-    limit = 30
-    id_limit = 250
+    limit = 10
+    id_limit = 50
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -412,62 +417,65 @@ def detect(weights='',
                                         ds_class = x
                             if int(identities[i]) in output_all_frames.keys():
                                 # check crossed line
-                                (w1, h1) = (x2-x1, y2-y1)
-                                prev_xyxy = output_all_frames[int(identities[i])][0][-1]
-                                print('prev xyxy', prev_xyxy)
-                                (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
-                                (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
-                                # p1 = (int(x1 + (w1-x1)/2), int(y1 + (h1-y1)/2))
-                                # q1 = (int(xp + (wp-xp)/2), int(yp + (hp-yp)/2))
-                                p1 = (int(x1 + (w1)/2), int(y1 + (h1)/2))
-                                q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
-                                print('p1 q1 : ', p1, q1)
-                                cv2.line(im0, p1, q1, (10, 255, 10), 3)
-                                p1 = IPoint(p1[0], p1[1])
-                                q1 = IPoint(q1[0], q1[1])
-                                for p2, q2 in line_coordinat:
-                                    p2 = IPoint(p2[0], p2[1])
-                                    q2 = IPoint(q2[0], q2[1])
-                                    if doIntersect(p1, q1, p2, q2):
-                                        if int(identities[i]) not in counting_id:
-                                            counting_id.append(int(identities[i]))
-                                            data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
+                                if type_process[0]:
+                                    (w1, h1) = (x2-x1, y2-y1)
+                                    prev_xyxy = output_all_frames[int(identities[i])][0][-1]
+                                    print('prev xyxy', prev_xyxy)
+                                    (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
+                                    (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
+                                    # p1 = (int(x1 + (w1-x1)/2), int(y1 + (h1-y1)/2))
+                                    # q1 = (int(xp + (wp-xp)/2), int(yp + (hp-yp)/2))
+                                    p1 = (int(x1 + (w1)/2), int(y1 + (h1)/2))
+                                    q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
+                                    print('p1 q1 : ', p1, q1)
+                                    cv2.line(im0, p1, q1, (10, 255, 10), 3)
+                                    p1 = IPoint(p1[0], p1[1])
+                                    q1 = IPoint(q1[0], q1[1])
+                                    for p2, q2 in line_coordinat:
+                                        p2 = IPoint(p2[0], p2[1])
+                                        q2 = IPoint(q2[0], q2[1])
+                                        if doIntersect(p1, q1, p2, q2):
+                                            if int(identities[i]) not in counting_id:
+                                                counting_id.append(int(identities[i]))
+                                                data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
                                 # check direction
-                                minus_y1 = prev_xyxy[1] - y1 
-                                minus_y2 = prev_xyxy[3] - y2
-                                minus_x1 = prev_xyxy[0] - x1
-                                minus_x2 = prev_xyxy[2] - x2
-                                # 0=up, 1=right, 2=down, 3=left
-                                if minus_y1 > 0 and minus_y2 > 0:
-                                    output_all_frames[int(identities[i])][4].append(0)
-                                    label = '^'
-                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
-                                if minus_y1 < 0 and minus_y2 < 0:
-                                    output_all_frames[int(identities[i])][4].append(2)
-                                    label = 'v'
-                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
-                                if minus_x1 > 0 and minus_x2 > 0:
-                                    output_all_frames[int(identities[i])][4].append(3)
-                                    label = '<'
-                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
-                                if minus_x1 < 0 and minus_x2 < 0:
-                                    output_all_frames[int(identities[i])][4].append(1)
-                                    label = '>'
-                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                    cv2.putText(im0, label, (x1, y1 - t_size[1]), cv2.FONT_HERSHEY_PLAIN, 2, [255, 255, 255], 1)
+                                if type_process[1]:
+                                    minus_y1 = prev_xyxy[1] - y1 
+                                    minus_y2 = prev_xyxy[3] - y2
+                                    minus_x1 = prev_xyxy[0] - x1
+                                    minus_x2 = prev_xyxy[2] - x2
+                                    # 0=up, 1=right, 2=down, 3=left
+                                    if minus_y1 > 0 and minus_y2 > 0:
+                                        output_all_frames[int(identities[i])][4].append(0)
+                                        label = '^'
+                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                    if minus_y1 < 0 and minus_y2 < 0:
+                                        output_all_frames[int(identities[i])][4].append(2)
+                                        label = 'v'
+                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                    if minus_x1 > 0 and minus_x2 > 0:
+                                        output_all_frames[int(identities[i])][4].append(3)
+                                        label = '<'
+                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                    if minus_x1 < 0 and minus_x2 < 0:
+                                        output_all_frames[int(identities[i])][4].append(1)
+                                        label = '>'
+                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
                                 # check region
-                                for x in range(len(polygon)):
-                                    path = MPath.Path(polygon[x][0])
-                                    # inside2 = path.contains_points([[i[0], i[1]]])
-                                    if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
-                                        output_all_frames[int(identities[i])][2].append(x)
-                                        output_all_frames[int(identities[i])][3].append(polygon[x][1])
+                                if type_process[2]:
+                                    for x in range(len(polygon)):
+                                        path = MPath.Path(polygon[x][0])
+                                        # inside2 = path.contains_points([[i[0], i[1]]])
+                                        if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
+                                            output_all_frames[int(identities[i])][2].append(x)
+                                            output_all_frames[int(identities[i])][3].append(polygon[x][1])
                                 # check for invalid direction
                                 if len(output_all_frames[int(identities[i])][3]) > 10 \
-                                        and len(output_all_frames[int(identities[i])][4]) > 10:
+                                        and len(output_all_frames[int(identities[i])][4]) > 10 and type_process[1]:
                                     # if most_frequent(output_all_frames[int(identities[i])][3]) \
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
                                     unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
@@ -484,7 +492,7 @@ def detect(weights='',
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
                                 # check for invalid turn
-                                if len(output_all_frames[int(identities[i])][2]) > 10:
+                                if len(output_all_frames[int(identities[i])][2]) > 10 and type_process[2]:
                                     # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
                                     #                                 return_counts=True)
                                     first = True
@@ -508,7 +516,7 @@ def detect(weights='',
                                                         data[6] += 1
                                                     label = 'X'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                                    cv2.putText(im0, label, (x1 - t_size[1], y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 1)
+                                                    cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
                             else:
                                 # oaf[ID] = [[in frame coordinat], [class_type], [region]
                                 #            [true_direction], [pred_direction]]
@@ -604,6 +612,10 @@ def detect(weights='',
 def video_feed():
     global stop_is_pressed
     global url
+    global line_coordinat
+    global polygon
+    global invalid_move
+
     # print(stop_is_pressed)
     if stop_is_pressed:
         print('FROM IMAGE')
@@ -624,10 +636,9 @@ def video_feed():
             classes=None,       # Filter by class
             conf_thres=0.1,
             iou_thres=0.5,
-            line_coordinat = [[(131,414), (331,386)], [(427,418), (586,367)]],
-            polygon=[[[(126,466), (158, 561), (529,566), (280,342), (122,346)], 0],
-                     [[(302,330), (554,508), (716,416), (444,314)], 2]],
-            invalid_move = [[0,1], [1,0]]
+            line_coordinat=line_coordinat,
+            polygon=polygon,
+            invalid_move=invalid_move
         ),mimetype = 'multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/data', methods=['GET'])
@@ -646,6 +657,10 @@ def hello():
 def bridge():
     global stop_is_pressed
     global url
+    global line_coordinat
+    global polygon
+    global invalid_move
+    global type_process
 
     if request.method == "POST":
         if request.is_json:
@@ -655,7 +670,32 @@ def bridge():
             if len(res) > 1 and type(res) == type([]):
                 print('PLAY')
                 stop_is_pressed = False
-                response = make_response(jsonify('play'), 200)
+
+                print('Configuration')
+                for x1, y1, x2, y2 in res[0]:
+                    line_coordinat.append([(x1, y1), (x2, y2)])
+                for x in range(len(res[1])):
+                    list_poly = []
+                    for xy in res[1][x]:
+                        list_poly.append((xy['x'], xy['y']))
+                    if res[2][x] == 'UP':
+                        dir_n = 0 
+                    if res[2][x] == 'LEFT':
+                        dir_n = 1
+                    if res[2][x] == 'DOWN':
+                        dir_n = 2
+                    if res[2][x] == 'RIGHT':
+                        dir_n = 3
+                    poly_and_dir = [list_poly, dir_n]
+                    polygon.append(poly_and_dir)
+                for regA, regB in res[3]:
+                    invalid_move.append([int(regA), int(regB)])
+                type_process = res[4]
+                print('1 : ', line_coordinat)
+                print('2 : ', polygon)
+                print('3 : ', invalid_move)
+                print('4 : ', type_process)
+                response = make_response(jsonify(res), 200)
                 return response
             elif len(res) == 1 and type(res) == type([]):
                 url = res[0]

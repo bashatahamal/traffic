@@ -109,9 +109,14 @@ prototypefabric.polygon = {
             selectable: false, 
             evented: false
         });
-        PolyCoord.push(points)
+        p = []
+        for (x = 0; x < points.length; x++) {
+			p.push(points[x])
+		}
+        PolyCoord.push(p)
         DirectList.push(direction)
-//         console.log(points)
+        // console.log(points)
+        // console.log(p)
 //         AddMidText(points, PolyCoord.length + '; ' + 'UP')
         cmid = get_polygon_centroid(points)
         canvas.add(new fabric.Text(PolyCoord.length + '; ' + direction, { 
