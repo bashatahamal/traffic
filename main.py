@@ -495,6 +495,7 @@ def detect(weights='',
                                             id_opp_in_unique = x
                                             break
                                     if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
+                                        print(output_all_frames[int(identities[i])][4])
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
@@ -659,10 +660,10 @@ def video_feed():
             # source='/home/mhbrt/Desktop/EVA/eva/media/condong catur.mp4'
             source=url,
             # source='0',
-            img_size=576,
+            img_size=480,
             # augment=True,
             agnostic_nms=True,
-            fps_count= 1,
+            fps_count= 2,
             classes=None,       # Filter by class
             conf_thres=0.1,
             iou_thres=0.5,
