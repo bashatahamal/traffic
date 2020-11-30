@@ -204,10 +204,10 @@ def draw_boxes(img, bbox, identities=None, offset=(0,0)):
         id = int(identities[i]) if identities is not None else 0   
         color = compute_color_for_labels(id)
         label = '{}{:d}'.format("", id)
-        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_DUPLEX, 0.6, 1)[0]
         cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
         cv2.rectangle(img, (x1, y1), (x1 + t_size[0] + 3, y1 + t_size[1] + 4), color, -1)
-        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+        cv2.putText(img, label, (x1, y1 + t_size[1] + 4), cv2.FONT_HERSHEY_DUPLEX, 0.6, [255, 255, 255], 1)
     return img
 
 def most_frequent(List): 
@@ -307,7 +307,7 @@ def detect(weights='',
             # break
         # else:
         k += 1
-        if k == fps_count:
+        if k >= fps_count:
             k = 0
             img = torch.from_numpy(img).to(device)
             img = img.half() if half else img.float()  # uint8 to fp16/32
@@ -394,7 +394,7 @@ def detect(weights='',
                     
                     # Pass detections to deepsort
                     outputs = deepsort.update(xywhs, confss, im0)
-                    print('Output Deep Sort: ', outputs)
+                    # print('Output Deep Sort: ', outputs)
                     # draw boxes for visualization
                     if len(outputs) > 0:
                         bbox_xyxy = outputs[:, :4]
@@ -403,9 +403,9 @@ def detect(weights='',
                         # Save all results to dictionary
                         for i, box in enumerate(bbox_xyxy):
                             x1, y1, x2, y2 = [int(i) for i in box]
-                            print('x1 y1 x2 y2 : ', x1,y1, x2, y2)
-                            print('i : ', i)
-                            print('int(identities[i]) : ', int(identities[i]))
+                            # print('x1 y1 x2 y2 : ', x1,y1, x2, y2)
+                            # print('i : ', i)
+                            # print('int(identities[i]) : ', int(identities[i]))
                             ds_class = float('inf')
                             smallest = float('inf')
                             for x in save_from_det:
@@ -420,14 +420,14 @@ def detect(weights='',
                                 if type_process[0]:
                                     (w1, h1) = (x2-x1, y2-y1)
                                     prev_xyxy = output_all_frames[int(identities[i])][0][-1]
-                                    print('prev xyxy', prev_xyxy)
+                                    # print('prev xyxy', prev_xyxy)
                                     (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
                                     (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
                                     # p1 = (int(x1 + (w1-x1)/2), int(y1 + (h1-y1)/2))
                                     # q1 = (int(xp + (wp-xp)/2), int(yp + (hp-yp)/2))
                                     p1 = (int(x1 + (w1)/2), int(y1 + (h1)/2))
                                     q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
-                                    print('p1 q1 : ', p1, q1)
+                                    # print('p1 q1 : ', p1, q1)
                                     cv2.line(im0, p1, q1, (10, 255, 10), 3)
                                     p1 = IPoint(p1[0], p1[1])
                                     q1 = IPoint(q1[0], q1[1])
@@ -439,7 +439,9 @@ def detect(weights='',
                                                 counting_id.append(int(identities[i]))
                                                 data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
                                 # check direction
-                                if type_process[1]:
+                                if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= int(3/4*limit):
+                                    #change xyxy to the oldest
+                                    prev_xyxy = output_all_frames[int(identities[i])][0][0]
                                     minus_y1 = prev_xyxy[1] - y1 
                                     minus_y2 = prev_xyxy[3] - y2
                                     minus_x1 = prev_xyxy[0] - x1
@@ -473,36 +475,54 @@ def detect(weights='',
                                         if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
                                             output_all_frames[int(identities[i])][2].append(x)
                                             output_all_frames[int(identities[i])][3].append(polygon[x][1])
+                                            break
                                 # check for invalid direction
-                                if len(output_all_frames[int(identities[i])][3]) > int(3/4*limit)\
-                                        and len(output_all_frames[int(identities[i])][4]) > int(3/4*limit)\
+                                if len(output_all_frames[int(identities[i])][3]) >= int(3/4*limit)\
+                                        and len(output_all_frames[int(identities[i])][4]) >= int(3/4*limit)\
                                              and type_process[1]:
                                     # if most_frequent(output_all_frames[int(identities[i])][3]) \
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
                                     unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
                                                                   return_counts=True)
                                     true_direction = most_frequent(output_all_frames[int(identities[i])][3])
-                                    if true_direction not in unique:
+                                    opp_direction = true_direction + 2
+                                    if opp_direction > 3:
+                                        opp_direction -= 4
+                                    
+                                    id_opp_in_unique = -1
+                                    for x in range(len(unique)):
+                                        if opp_direction == unique[x]:
+                                            id_opp_in_unique = x
+                                            break
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
                                         label = '!'
                                         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
                                         cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
-                                    else:
-                                        for x in range(len(unique)):
-                                            if true_direction == unique[x]:
-                                                id_true_in_unique = x
-                                                break
-                                        if frequency[id_true_in_unique] < int(1/3*limit):
-                                            if int(identities[i]) not in invalid_direction_id:
-                                                invalid_direction_id.append(int(identities[i]))
-                                                data[5] += 1
-                                            label = '!'
-                                            t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                            cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
+                            
+                                    # if true_direction not in unique:
+                                    #     if int(identities[i]) not in invalid_direction_id:
+                                    #         invalid_direction_id.append(int(identities[i]))
+                                    #         data[5] += 1
+                                    #     label = '!'
+                                    #     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    #     cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
+                                    # else:
+                                    #     for x in range(len(unique)):
+                                    #         if true_direction == unique[x]:
+                                    #             id_true_in_unique = x
+                                    #             break
+                                    #     if frequency[id_true_in_unique] < int(1/3*limit):
+                                    #         if int(identities[i]) not in invalid_direction_id:
+                                    #             invalid_direction_id.append(int(identities[i]))
+                                    #             data[5] += 1
+                                    #         label = '!'
+                                    #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                    #         cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
                                 # check for invalid turn
-                                if len(output_all_frames[int(identities[i])][2]) > int(3/4*limit) and type_process[2]:
+                                if len(output_all_frames[int(identities[i])][2]) >= int(3/4*limit) and type_process[2]:
                                     # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
                                     #                                 return_counts=True)
                                     first = True
@@ -512,13 +532,13 @@ def detect(weights='',
                                             reg = r
                                             region_trace.append(r)
                                             first = False
-                                        if reg != r :
+                                        if reg != r:
                                             region_trace.append(r)
                                             reg = r
                                     if len(region_trace) > 1:
                                         for reg1, reg2 in invalid_move:
                                             for k in range(len(region_trace)):
-                                                if k+1 > len(region_trace)-1:
+                                                if k+1 >= len(region_trace):
                                                     break
                                                 if (region_trace[k], region_trace[k+1]) == (reg1, reg2):
                                                     if int(identities[i]) not in invalid_turn_id:
@@ -557,7 +577,7 @@ def detect(weights='',
                             invalid_direction_id = invalid_direction_id[-id_limit:]
                         if len(invalid_turn_id) > id_limit:
                             invalid_turn_id = invalid_turn_id[-id_limit:]
-                        print('All Frame : ', output_all_frames)
+                        # print('All Frame : ', output_all_frames)
 
                     # Write MOT compliant results to file
                     if save_txt and len(outputs) != 0:  
@@ -639,10 +659,10 @@ def video_feed():
             # source='/home/mhbrt/Desktop/EVA/eva/media/condong catur.mp4'
             source=url,
             # source='0',
-            img_size=256,
+            img_size=576,
             # augment=True,
             agnostic_nms=True,
-            fps_count= 10,
+            fps_count= 1,
             classes=None,       # Filter by class
             conf_thres=0.1,
             iou_thres=0.5,
