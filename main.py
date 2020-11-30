@@ -292,8 +292,8 @@ def detect(weights='',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
-    limit = 48
-    id_limit = 80
+    limit = 100
+    id_limit = 50
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -482,7 +482,7 @@ def detect(weights='',
                                         path = MPath.Path(polygon[n][0])
                                         # inside2 = path.contains_points([[i[0], i[1]]])
                                         if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
-                                            output_all_frames[int(identities[i])][2].append(n)
+                                            output_all_frames[int(identities[i])][2].append(n+1)
                                             output_all_frames[int(identities[i])][3].append(polygon[n][1])
 
                                             #check direction
@@ -515,6 +515,35 @@ def detect(weights='',
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
                                             break
+                                # check for invalid turn
+                                if len(output_all_frames[int(identities[i])][2]) >= int(1/4*limit) and type_process[2]:
+                                    # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
+                                    #                                 return_counts=True)
+                                    first = True
+                                    region_trace = []
+                                    for r in output_all_frames[int(identities[i])][2]:
+                                        if first:
+                                            reg = r
+                                            region_trace.append(r)
+                                            first = False
+                                        if reg != r:
+                                            region_trace.append(r)
+                                            reg = r
+                                    if len(region_trace) > 1:
+                                        # reset centroid capture if move to another region
+                                        output_all_frames[int(identities[i])][4] = []
+                                        for reg1, reg2 in invalid_move:
+                                            for k in range(len(region_trace)):
+                                                if k+1 >= len(region_trace):
+                                                    break
+                                                if (region_trace[k], region_trace[k+1]) == (reg1, reg2):
+                                                    if int(identities[i]) not in invalid_turn_id:
+                                                        invalid_turn_id.append(int(identities[i]))
+                                                        data[6] += 1
+                                                    label = 'X'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
+                                                    cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
+
                                 # check for invalid direction
                                 if len(output_all_frames[int(identities[i])][3]) >= 3\
                                         and len(output_all_frames[int(identities[i])][4]) >= 3\
@@ -523,7 +552,8 @@ def detect(weights='',
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
                                     unique, frequency = np.unique(output_all_frames[int(identities[i])][4],
                                                                   return_counts=True)
-                                    true_direction = most_frequent(output_all_frames[int(identities[i])][3])
+                                    # true_direction = most_frequent(output_all_frames[int(identities[i])][3])
+                                    true_direction = output_all_frames[int(identities[i])][3][-1]
                                     opp_direction = true_direction + 2
                                     if opp_direction > 3:
                                         opp_direction -= 4
@@ -533,7 +563,7 @@ def detect(weights='',
                                         if opp_direction == unique[x]:
                                             id_opp_in_unique = x
                                             break
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > limit:
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
                                         print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
@@ -561,32 +591,7 @@ def detect(weights='',
                                     #         label = '!'
                                     #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
                                     #         cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
-                                # check for invalid turn
-                                if len(output_all_frames[int(identities[i])][2]) >= limit and type_process[2]:
-                                    # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
-                                    #                                 return_counts=True)
-                                    first = True
-                                    region_trace = []
-                                    for r in output_all_frames[int(identities[i])][2]:
-                                        if first:
-                                            reg = r
-                                            region_trace.append(r)
-                                            first = False
-                                        if reg != r:
-                                            region_trace.append(r)
-                                            reg = r
-                                    if len(region_trace) > 1:
-                                        for reg1, reg2 in invalid_move:
-                                            for k in range(len(region_trace)):
-                                                if k+1 >= len(region_trace):
-                                                    break
-                                                if (region_trace[k], region_trace[k+1]) == (reg1, reg2):
-                                                    if int(identities[i]) not in invalid_turn_id:
-                                                        invalid_turn_id.append(int(identities[i]))
-                                                        data[6] += 1
-                                                    label = 'X'
-                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
-                                                    cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
+                                
                             else:
                                 # oaf[ID] = [[in frame coordinat], [class_type], [region]
                                 #            [true_direction], [pred_direction]]
