@@ -292,8 +292,8 @@ def detect(weights='',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
-    limit = 10
-    id_limit = 50
+    limit = 60
+    id_limit = 80
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
