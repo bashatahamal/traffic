@@ -292,7 +292,7 @@ def detect(weights='',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
-    limit = 60
+    limit = 48
     id_limit = 80
     output_all_frames = {}
     counting_id = []
@@ -439,43 +439,43 @@ def detect(weights='',
                                                 counting_id.append(int(identities[i]))
                                                 data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
                                 # check direction
-                                if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= int(3/4*limit):
-                                    #change xyxy to the oldest
-                                    prev_xyxy = output_all_frames[int(identities[i])][0][0]
-                                    (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
-                                    (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
-                                    q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
-                                    minus_x = q1[0] - p1[0]
-                                    minus_y = q1[1] - p1[1]
-                                    # minus_y1 = prev_xyxy[1] - y1 
-                                    # minus_y2 = prev_xyxy[3] - y2
-                                    # minus_x1 = prev_xyxy[0] - x1
-                                    # minus_x2 = prev_xyxy[2] - x2
-                                    # 0=up, 1=right, 2=down, 3=left
-                                    # if minus_y1 > 0 and minus_y2 > 0:
-                                    if minus_y > 0:
-                                        output_all_frames[int(identities[i])][4].append(0)
-                                        label = '^'
-                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
-                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                    # if minus_y1 < 0 and minus_y2 < 0:
-                                    if minus_y < 0:
-                                        output_all_frames[int(identities[i])][4].append(2)
-                                        label = 'v'
-                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
-                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                    # if minus_x1 > 0 and minus_x2 > 0:
-                                    if minus_x > 0:
-                                        output_all_frames[int(identities[i])][4].append(3)
-                                        label = '<'
-                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
-                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                    # if minus_x1 < 0 and minus_x2 < 0:
-                                    if minus_x < 0:
-                                        output_all_frames[int(identities[i])][4].append(1)
-                                        label = '>'
-                                        t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
-                                        cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
+                                #     #change xyxy to the oldest
+                                #     prev_xyxy = output_all_frames[int(identities[i])][0][0]
+                                #     (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
+                                #     (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
+                                #     q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
+                                #     minus_x = q1[0] - p1[0]
+                                #     minus_y = q1[1] - p1[1]
+                                #     # minus_y1 = prev_xyxy[1] - y1 
+                                #     # minus_y2 = prev_xyxy[3] - y2
+                                #     # minus_x1 = prev_xyxy[0] - x1
+                                #     # minus_x2 = prev_xyxy[2] - x2
+                                #     # 0=up, 1=right, 2=down, 3=left
+                                #     # if minus_y1 > 0 and minus_y2 > 0:
+                                #     if minus_y > 0:
+                                #         output_all_frames[int(identities[i])][4].append(0)
+                                #         label = '^'
+                                #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                #         cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                #     # if minus_y1 < 0 and minus_y2 < 0:
+                                #     if minus_y < 0:
+                                #         output_all_frames[int(identities[i])][4].append(2)
+                                #         label = 'v'
+                                #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                #         cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                #     # if minus_x1 > 0 and minus_x2 > 0:
+                                #     if minus_x > 0:
+                                #         output_all_frames[int(identities[i])][4].append(3)
+                                #         label = '<'
+                                #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                #         cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                #     # if minus_x1 < 0 and minus_x2 < 0:
+                                #     if minus_x < 0:
+                                #         output_all_frames[int(identities[i])][4].append(1)
+                                #         label = '>'
+                                #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                #         cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
                                 # check region
                                 if type_process[2]:
                                     for n in range(len(polygon)):
@@ -484,10 +484,40 @@ def detect(weights='',
                                         if path.contains_point((x1+int(w1/2), y1+int(h1/2))):
                                             output_all_frames[int(identities[i])][2].append(n)
                                             output_all_frames[int(identities[i])][3].append(polygon[n][1])
+
+                                            #check direction
+                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
+                                                # change xyxy to the oldest
+                                                prev_xyxy = output_all_frames[int(identities[i])][0][0]
+                                                (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
+                                                (wp, hp) = (int(prev_xyxy[2]-xp), int(prev_xyxy[3]-yp))
+                                                q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
+                                                minus_x = q1[0] - p1[0]
+                                                minus_y = q1[1] - p1[1]
+                                                if minus_y > 0:
+                                                    output_all_frames[int(identities[i])][4].append(0)
+                                                    label = '^'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                                    cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                                if minus_y < 0:
+                                                    output_all_frames[int(identities[i])][4].append(2)
+                                                    label = 'v'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                                    cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                                if minus_x > 0:
+                                                    output_all_frames[int(identities[i])][4].append(3)
+                                                    label = '<'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                                    cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
+                                                if minus_x < 0:
+                                                    output_all_frames[int(identities[i])][4].append(1)
+                                                    label = '>'
+                                                    t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
+                                                    cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
                                             break
                                 # check for invalid direction
-                                if len(output_all_frames[int(identities[i])][3]) >= int(3/4*limit)\
-                                        and len(output_all_frames[int(identities[i])][4]) >= int(3/4*limit)\
+                                if len(output_all_frames[int(identities[i])][3]) >= 3\
+                                        and len(output_all_frames[int(identities[i])][4]) >= 3\
                                              and type_process[1]:
                                     # if most_frequent(output_all_frames[int(identities[i])][3]) \
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
@@ -503,8 +533,8 @@ def detect(weights='',
                                         if opp_direction == unique[x]:
                                             id_opp_in_unique = x
                                             break
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
-                                        print(output_all_frames[int(identities[i])][4])
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > limit:
+                                        print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
                                             data[5] += 1
@@ -532,7 +562,7 @@ def detect(weights='',
                                     #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 2, 2)[0]
                                     #         cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
                                 # check for invalid turn
-                                if len(output_all_frames[int(identities[i])][2]) >= int(3/4*limit) and type_process[2]:
+                                if len(output_all_frames[int(identities[i])][2]) >= limit and type_process[2]:
                                     # unique, frequency = np.unique(output_all_frames[int(identities[i])][2],
                                     #                                 return_counts=True)
                                     first = True
