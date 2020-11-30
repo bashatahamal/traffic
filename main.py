@@ -429,12 +429,12 @@ def detect(weights='',
                                     q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
                                     # print('p1 q1 : ', p1, q1)
                                     cv2.line(im0, p1, q1, (10, 255, 10), 3)
-                                    p1 = IPoint(p1[0], p1[1])
-                                    q1 = IPoint(q1[0], q1[1])
+                                    pt1 = IPoint(p1[0], p1[1])
+                                    qt1 = IPoint(q1[0], q1[1])
                                     for p2, q2 in line_coordinat:
                                         p2 = IPoint(p2[0], p2[1])
                                         q2 = IPoint(q2[0], q2[1])
-                                        if doIntersect(p1, q1, p2, q2):
+                                        if doIntersect(pt1, qt1, p2, q2):
                                             if int(identities[i]) not in counting_id:
                                                 counting_id.append(int(identities[i]))
                                                 data[most_frequent(output_all_frames[int(identities[i])][1])] += 1
