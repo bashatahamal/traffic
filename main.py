@@ -292,8 +292,8 @@ def detect(weights='',
     _ = model(img.half() if half else img) if device.type != 'cpu' else None
     # print(model)
     k = 0
-    limit = 100
-    id_limit = 50
+    limit = 60
+    id_limit = 20
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -563,7 +563,7 @@ def detect(weights='',
                                         if opp_direction == unique[x]:
                                             id_opp_in_unique = x
                                             break
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/8*limit):
                                         print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
