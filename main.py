@@ -293,7 +293,8 @@ def detect(weights='',
     # print(model)
     k = 0
     limit = 60
-    id_limit = 30
+    id_limit = 20
+    trap_xy = 0
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -307,6 +308,7 @@ def detect(weights='',
             # break
         # else:
         k += 1
+        trap_xy += 1
         if k >= fps_count:
             k = 0
             img = torch.from_numpy(img).to(device)
@@ -486,7 +488,9 @@ def detect(weights='',
                                             output_all_frames[int(identities[i])][3].append(polygon[n][1])
 
                                             #check direction
-                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
+                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
+                                                    and trap_xy >= limit:
+                                                trap_xy = 0
                                                 # change xyxy to the oldest
                                                 prev_xyxy = output_all_frames[int(identities[i])][0][0]
                                                 (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
@@ -563,7 +567,8 @@ def detect(weights='',
                                         if opp_direction == unique[x]:
                                             id_opp_in_unique = x
                                             break
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/3*limit):
+                                    # if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > 3:
                                         print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
@@ -707,7 +712,7 @@ def video_feed():
             img_size=480,
             # augment=True,
             agnostic_nms=True,
-            fps_count= 2,
+            fps_count= 1,
             classes=None,       # Filter by class
             conf_thres=0.1,
             iou_thres=0.5,
