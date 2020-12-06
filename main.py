@@ -293,7 +293,7 @@ def detect(weights='',
     # print(model)
     k = 0
     limit = 60
-    id_limit = 20
+    id_limit = 30
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -494,22 +494,22 @@ def detect(weights='',
                                                 q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
                                                 minus_x = q1[0] - p1[0]
                                                 minus_y = q1[1] - p1[1]
-                                                if minus_y > 0 and abs(minus_y) > abs(minus_x):
+                                                if minus_y > 0:
                                                     output_all_frames[int(identities[i])][4].append(0)
                                                     label = '^'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_y < 0 and abs(minus_y) > abs(minus_x):
+                                                if minus_y < 0:
                                                     output_all_frames[int(identities[i])][4].append(2)
                                                     label = 'v'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_x > 0 and abs(minus_x) > abs(minus_y):
+                                                if minus_x > 0:
                                                     output_all_frames[int(identities[i])][4].append(3)
                                                     label = '<'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_x < 0 and abs(minus_x) > abs(minus_y):
+                                                if minus_x < 0:
                                                     output_all_frames[int(identities[i])][4].append(1)
                                                     label = '>'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
@@ -563,7 +563,7 @@ def detect(weights='',
                                         if opp_direction == unique[x]:
                                             id_opp_in_unique = x
                                             break
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/8*limit):
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/3*limit):
                                         print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
