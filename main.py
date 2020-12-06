@@ -489,7 +489,7 @@ def detect(weights='',
 
                                             #check direction
                                             if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                                    and trap_xy >= 10:
+                                                    and trap_xy >= 5:
                                                 trap_xy = 0
                                                 # change xyxy to the oldest
                                                 prev_xyxy = output_all_frames[int(identities[i])][0][0]
@@ -712,7 +712,7 @@ def video_feed():
             img_size=480,
             # augment=True,
             agnostic_nms=True,
-            fps_count= 1,
+            fps_count= 2,
             classes=None,       # Filter by class
             conf_thres=0.1,
             iou_thres=0.5,
