@@ -488,10 +488,9 @@ def detect(weights='',
                                             output_all_frames[int(identities[i])][3].append(polygon[n][1])
 
                                             #check direction
-                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
-                                            # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                            #         and trap_xy >= 5:
-                                                trap_xy = 0
+                                            # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
+                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
+                                                    and trap_xy >= 30:
                                                 # change xyxy to the oldest
                                                 prev_xyxy = output_all_frames[int(identities[i])][0][0]
                                                 (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
@@ -499,22 +498,23 @@ def detect(weights='',
                                                 q1 = (int(xp + (wp)/2), int(yp + (hp)/2))
                                                 minus_x = q1[0] - p1[0]
                                                 minus_y = q1[1] - p1[1]
-                                                if minus_y > 0:
+                                                limit_dir = 1/3
+                                                if minus_y > 0 and abs(minus_y) > abs(limit_dir*minus_x):
                                                     output_all_frames[int(identities[i])][4].append(0)
                                                     label = '^'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_y < 0:
+                                                if minus_y < 0 and abs(minus_y) > abs(limit_dir*minus_x):
                                                     output_all_frames[int(identities[i])][4].append(2)
                                                     label = 'v'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_x > 0:
+                                                if minus_x > 0 and abs(minus_x) > abs(limit_dir*minus_y):
                                                     output_all_frames[int(identities[i])][4].append(3)
                                                     label = '<'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                                     cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
-                                                if minus_x < 0:
+                                                if minus_x < 0 and abs(minus_x) > abs(limit_dir*minus_y):
                                                     output_all_frames[int(identities[i])][4].append(1)
                                                     label = '>'
                                                     t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
@@ -668,6 +668,8 @@ def detect(weights='',
                             h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                             vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                         vid_writer.write(im0)
+            # invalid direction count reset
+            trap_xy = 0
             # cv2.imshow(p, im0)
             # if cv2.waitKey(1) == ord('q'):  # q to quit
             #     raise StopIteration
