@@ -489,7 +489,7 @@ def detect(weights='',
 
                                             #check direction
                                             if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                                    and trap_xy >= limit:
+                                                    and trap_xy >= 10:
                                                 trap_xy = 0
                                                 # change xyxy to the oldest
                                                 prev_xyxy = output_all_frames[int(identities[i])][0][0]
