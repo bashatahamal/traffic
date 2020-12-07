@@ -295,6 +295,7 @@ def detect(weights='',
     limit = 60
     id_limit = 20
     trap_xy = 0
+    trap_frame = False
     output_all_frames = {}
     counting_id = []
     invalid_direction_id = []
@@ -490,7 +491,9 @@ def detect(weights='',
                                             #check direction
                                             # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
                                             if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                                    and trap_xy >= 30:
+                                                    and (trap_xy >= 30 or trap_frame):
+                                                trap_xy = 0
+                                                trap_frame = True
                                                 # change xyxy to the oldest
                                                 prev_xyxy = output_all_frames[int(identities[i])][0][0]
                                                 (xp, yp) = (int(prev_xyxy[0]), int(prev_xyxy[1]))
@@ -669,7 +672,7 @@ def detect(weights='',
                             vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                         vid_writer.write(im0)
             # invalid direction count reset
-            trap_xy = 0
+            trap_frame = False
             # cv2.imshow(p, im0)
             # if cv2.waitKey(1) == ord('q'):  # q to quit
             #     raise StopIteration
