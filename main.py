@@ -480,6 +480,7 @@ def detect(weights='',
                                 #         t_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_PLAIN, 1.2, 1)[0]
                                 #         cv2.putText(im0, label, (x1, y1 - int(t_size[1]/2)), cv2.FONT_HERSHEY_PLAIN, 1.2, [255, 255, 255], 1)
                                 # check region
+                                l_check = 3
                                 if type_process[2]:
                                     for n in range(len(polygon)):
                                         path = MPath.Path(polygon[n][0])
@@ -491,7 +492,7 @@ def detect(weights='',
                                             #check direction
                                             # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
                                             if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                                    and (trap_xy >= 30 or trap_frame):
+                                                    and (trap_xy >= 15 or trap_frame):
                                                 trap_xy = 0
                                                 trap_frame = True
                                                 # change xyxy to the oldest
@@ -553,8 +554,8 @@ def detect(weights='',
                                                     cv2.putText(im0, label, (x1 + int(t_size[1]/2), y1), cv2.FONT_HERSHEY_PLAIN, 2, [0, 0, 255], 2)
 
                                 # check for invalid direction
-                                if len(output_all_frames[int(identities[i])][3]) >= 3\
-                                        and len(output_all_frames[int(identities[i])][4]) >= 3\
+                                if len(output_all_frames[int(identities[i])][3]) >= l_check\
+                                        and len(output_all_frames[int(identities[i])][4]) >= l_check\
                                              and type_process[1]:
                                     # if most_frequent(output_all_frames[int(identities[i])][3]) \
                                     #         != most_frequent(output_all_frames[int(identities[i])][4]):
@@ -572,7 +573,7 @@ def detect(weights='',
                                             id_opp_in_unique = x
                                             break
                                     # if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > int(1/4*limit):
-                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > 3:
+                                    if id_opp_in_unique >= 0 and frequency[id_opp_in_unique] > l_check:
                                         print(output_all_frames[int(identities[i])][4], int(identities[i]))
                                         if int(identities[i]) not in invalid_direction_id:
                                             invalid_direction_id.append(int(identities[i]))
