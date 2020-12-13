@@ -628,12 +628,16 @@ def detect(weights='',
                                 del output_all_frames[x]
                         # if len(counting_id) > id_limit:
                         #     counting_id = counting_id[-id_limit:]
-                        if len(counting_id) > 5:
-                            counting_id = counting_id[-5:]
-                        if len(invalid_direction_id) > id_limit:
-                            invalid_direction_id = invalid_direction_id[-id_limit:]
-                        if len(invalid_turn_id) > id_limit:
-                            invalid_turn_id = invalid_turn_id[-id_limit:]
+                        if len(counting_id) > 3:
+                            counting_id = counting_id[-3:]
+                        # if len(invalid_direction_id) > id_limit:
+                        #     invalid_direction_id = invalid_direction_id[-id_limit:]
+                        if len(invalid_direction_id) > 3:
+                            invalid_direction_id = invalid_direction_id[-3:]
+                        # if len(invalid_turn_id) > id_limit:
+                        #     invalid_turn_id = invalid_turn_id[-id_limit:]
+                        if len(invalid_turn_id) > 3:
+                            invalid_turn_id = invalid_turn_id[-3:]
                         # print('All Frame : ', output_all_frames)
 
                     # Write MOT compliant results to file
