@@ -293,7 +293,7 @@ def detect(weights='',
     # print(model)
     k = 0
     limit = 60
-    id_limit = 20
+    id_limit = 50
     trap_xy = 0
     trap_frame = False
     output_all_frames = {}
@@ -491,8 +491,8 @@ def detect(weights='',
 
                                             #check direction
                                             # if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit:
-                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= limit\
-                                                    and (trap_xy >= 15 or trap_frame):
+                                            if type_process[1] and len(output_all_frames[int(identities[i])][0]) >= 1/3*limit\
+                                                    and (trap_xy >= 10 or trap_frame):
                                                 trap_xy = 0
                                                 trap_frame = True
                                                 # change xyxy to the oldest
@@ -626,8 +626,10 @@ def detect(weights='',
                                      -set(sorted(output_all_frames.keys())[-id_limit:]))
                             for x in unused:
                                 del output_all_frames[x]
-                        if len(counting_id) > id_limit:
-                            counting_id = counting_id[-id_limit:]
+                        # if len(counting_id) > id_limit:
+                        #     counting_id = counting_id[-id_limit:]
+                        if len(counting_id) > 5:
+                            counting_id = counting_id[-5:]
                         if len(invalid_direction_id) > id_limit:
                             invalid_direction_id = invalid_direction_id[-id_limit:]
                         if len(invalid_turn_id) > id_limit:
